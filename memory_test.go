@@ -7,8 +7,9 @@ import (
 
 func TestMemory(t *testing.T) {
 	var v, expected uint16
-	var address uint32
-	address = rand.Uint32()
+	var address uint20
+
+	address = uint20(rand.Uint32())
 	m := NewBasicMemory()
 	expected = 65535
 	m.Write(address, expected)
