@@ -17,9 +17,16 @@ const (
 	V                         // overfloww
 )
 
+const (
+	PC = iota
+	SP
+	SR
+	CG1 = 2
+	CG2 = 3
+)
+
 type Registers struct {
-	R                    [16]uint16
-	PC, SP, SR, CG1, CG2 *uint16
+	R [16]uint16
 }
 
 // Creates a new set of Registers
@@ -31,14 +38,13 @@ func NewRegisters() (reg *Registers) {
 
 // Resets all registers
 func (reg *Registers) Reset() {
-	for i := 0; i < 16; i++ {
+	for i := 4; i < 16; i++ {
 		reg.R[i] = 0
 	}
-	reg.PC = &reg.R[0]
-	reg.SP = &reg.R[1]
-	reg.SR = &reg.R[2]
-	reg.CG1 = &reg.R[2]
-	reg.CG2 = &reg.R[3]
+	reg.R[PC] = 0
+	reg.R[SP] = 0
+	reg.R[SR] = 0
+	reg.R[CG2] = 0
 	// TODO: PC, SP, SR different values?
 }
 
@@ -51,8 +57,39 @@ func (reg *Registers) Print() {
 }
 
 // Represents the msp430 cpu
-type cpu struct {
-	//Clock		Clock
-	Registers Registers
-	//Instructions InstructionTable
+type CPU struct {
+	reg      Registers
+	src, dst uint16
+	inst     uint16
+	//instructions InstructionTable
+}
+
+// SoC: System on a Chip (Computer)
+type soc struct {
+	cpu   CPU
+	mem   Memory
+	clock Clock
+}
+
+func (cpu *CPU) Execute() {
+	// fetch
+	opcode := OpCode(soc.memory.read(soc.cpu.reg.R[PC]))
+	inst, ok := cpu.instructions[opcode]
+
+	if !ok {
+		fmt.Printf("No such opcode 0x%x\n", opcode)
+		os.Exit(1)
+	}
+
+	// execute, exec() returns number of cycles
+	cycles := inst.exec(cpu)
+
+	// count cycles
+	for _ = range cpu.clock.ticker.C {
+		cycles--
+
+		if cycles == 0 {
+			break
+		}
+	}
 }
