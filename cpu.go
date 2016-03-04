@@ -21,8 +21,7 @@ const (
 	PC = iota
 	SP
 	SR
-	CG1 = 2
-	CG2 = 3
+	CG
 )
 
 type Registers struct {
@@ -44,7 +43,7 @@ func (reg *Registers) Reset() {
 	reg.R[PC] = 0
 	reg.R[SP] = 0
 	reg.R[SR] = 0
-	reg.R[CG2] = 0
+	reg.R[CG] = 0
 	// TODO: PC, SP, SR different values?
 }
 
