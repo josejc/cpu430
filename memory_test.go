@@ -1,6 +1,7 @@
 package cpu430
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 )
@@ -17,6 +18,7 @@ func TestMemory(t *testing.T) {
 	if v != expected {
 		t.Error("Expected 65535, got ", v)
 	}
+	fmt.Println(m.RawDump(address, 16))
 	m.Reset()
 	v = m.Read(address)
 	if v != 0 {

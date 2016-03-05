@@ -1,6 +1,9 @@
 package cpu430
 
-import ()
+import (
+	"bytes"
+	"fmt"
+)
 
 // TODO: Control of size and memory limit
 
@@ -48,6 +51,23 @@ func (mem *BasicMemory) Read(address uint20) (value uint16) {
 func (mem *BasicMemory) Write(address uint20, value uint16) {
 	mem.m[address] = value
 	return
+}
+
+// TODO: Check even address, limit memory
+func (mem *BasicMemory) RawDump(address uint20, size uint16) string {
+	var buffer bytes.Buffer
+	var data uint16
+
+	long := address + uint20(size)
+	for i := address; i < long; i = i + 2 {
+		data = mem.m[i]
+		buffer.WriteString(fmt.Sprintf("%04x ", data))
+	}
+	return buffer.String()
+}
+
+func (mem *BasicMemory) Dump(address uint20, size uint16) {
+	const LINE = 16 // Long of line, 16 BYTES
 }
 
 // TODO: function to load memory of file ;)

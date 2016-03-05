@@ -63,11 +63,13 @@ type CPU struct {
 	//instructions InstructionTable
 }
 
+/*
+
 // SoC: System on a Chip (Computer)
 type soc struct {
-	cpu   CPU
-	mem   Memory
-	clock Clock
+	cpu CPU
+	mem Memory
+	//	clock Clock
 }
 
 func (cpu *CPU) Execute() {
@@ -92,3 +94,4 @@ func (cpu *CPU) Execute() {
 		}
 	}
 }
+*/
