@@ -66,8 +66,26 @@ func (mem *BasicMemory) RawDump(address uint20, size uint16) string {
 	return buffer.String()
 }
 
-func (mem *BasicMemory) Dump(address uint20, size uint16) {
-	const LINE = 16 // Long of line, 16 BYTES
+func (mem *BasicMemory) Dump(address uint20, size uint16) []string {
+	const (
+		LINE   = 16         // Long of line, 16 BYTES
+		MAX    = 65535      // Max. size of dump memory
+		N_LINE = MAX / LINE // Number of lines of the dump
+	)
+	var bufhex, bufasc bytes.Buffer
+	dump := make([]string, N_LINE)
+
+	ad := uint16(address)
+	ad = ad & 0xfff0
+	long := uint16(address) + size
+	long = long | 0x000f
+	l := (ad + long) / LINE // number of lines
+	i := ad
+	for j := 0; j < l; j++ {
+		data = mem.m[i]
+		i = i + 2
+	}
+	return dump
 }
 
 // TODO: function to load memory of file ;)
