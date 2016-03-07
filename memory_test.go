@@ -18,7 +18,12 @@ func TestMemory(t *testing.T) {
 	if v != expected {
 		t.Error("Expected 65535, got ", v)
 	}
-	fmt.Println(m.RawDump(address, 16))
+	m.Write(address+2, 0x4142)
+	m.Write(address+4, 0x4344)
+	fmt.Println("Address: ", address)
+	fmt.Println(m.RawDumpHex(address, 16))
+	fmt.Println(m.RawDumpAscii(address, 16))
+	fmt.Println(m.Dump(address, 32))
 	m.Reset()
 	v = m.Read(address)
 	if v != 0 {

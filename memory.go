@@ -54,7 +54,7 @@ func (mem *BasicMemory) Write(address uint20, value uint16) {
 }
 
 // TODO: Check even address, limit memory
-func (mem *BasicMemory) RawDump(address uint20, size uint16) string {
+func (mem *BasicMemory) RawDumpHex(address uint20, size uint16) string {
 	var buffer bytes.Buffer
 	var data uint16
 
@@ -66,24 +66,51 @@ func (mem *BasicMemory) RawDump(address uint20, size uint16) string {
 	return buffer.String()
 }
 
+func ascii(dx uint8) uint8 {
+	if (dx >= 32) && (dx < 127) {
+		return dx
+	}
+	return '.'
+}
+
+// ;)
+func (mem *BasicMemory) RawDumpAscii(address uint20, size uint16) string {
+	var buffer bytes.Buffer
+	var data uint16
+	var dh, dl uint8
+
+	long := address + uint20(size)
+	for i := address; i < long; i = i + 2 {
+		data = mem.m[i]
+		dh = ascii(uint8((data & 0xff00) >> 8))
+		dl = ascii(uint8(data & 0x00ff))
+		buffer.WriteString(string(dh))
+		buffer.WriteString(string(dl))
+	}
+	return buffer.String()
+}
+
 func (mem *BasicMemory) Dump(address uint20, size uint16) []string {
 	const (
 		LINE   = 16         // Long of line, 16 BYTES
 		MAX    = 65535      // Max. size of dump memory
 		N_LINE = MAX / LINE // Number of lines of the dump
 	)
-	var bufhex, bufasc bytes.Buffer
+	buffer := bytes.NewBuffer(nil)
 	dump := make([]string, N_LINE)
 
 	ad := uint16(address)
-	ad = ad & 0xfff0
-	long := uint16(address) + size
-	long = long | 0x000f
-	l := (ad + long) / LINE // number of lines
-	i := ad
-	for j := 0; j < l; j++ {
-		data = mem.m[i]
-		i = i + 2
+	ad &= 0xfff0
+	adEnd := uint16(address) + size
+	adEnd |= 0x000f
+	for i := 0; ad < adEnd; i++ {
+		buffer.WriteString(fmt.Sprintf("%04x: ", ad))
+		buffer.WriteString(mem.RawDumpHex(uint20(ad), 16))
+		buffer.WriteString(" ")
+		buffer.WriteString(mem.RawDumpAscii(uint20(ad), 16))
+		dump[i] = buffer.String()
+		buffer = bytes.NewBuffer(nil)
+		ad += 16
 	}
 	return dump
 }
