@@ -92,25 +92,27 @@ func (mem *BasicMemory) RawDumpAscii(address uint20, size uint16) string {
 
 func (mem *BasicMemory) Dump(address uint20, size uint16) []string {
 	const (
-		LINE   = 16         // Long of line, 16 BYTES
-		MAX    = 65535      // Max. size of dump memory
-		N_LINE = MAX / LINE // Number of lines of the dump
+		LINE = 0x10 // Size of dump bytes in a line
 	)
 	buffer := bytes.NewBuffer(nil)
-	dump := make([]string, N_LINE)
 
 	ad := uint16(address)
 	ad &= 0xfff0
 	adEnd := uint16(address) + size
 	adEnd |= 0x000f
+	n_line := ((adEnd + 1) - ad) / LINE
+	fmt.Println("address:", address, "ad:", ad, "adEnd:", adEnd, "nline:", n_line)
+	dump := make([]string, n_line)
 	for i := 0; ad < adEnd; i++ {
 		buffer.WriteString(fmt.Sprintf("%04x: ", ad))
-		buffer.WriteString(mem.RawDumpHex(uint20(ad), 16))
+		fmt.Println("uint20-ad", uint20(ad))
+		fmt.Println(mem.RawDumpHex(uint20(ad), LINE))
+		buffer.WriteString(mem.RawDumpHex(uint20(ad), LINE))
 		buffer.WriteString(" ")
-		buffer.WriteString(mem.RawDumpAscii(uint20(ad), 16))
+		buffer.WriteString(mem.RawDumpAscii(uint20(ad), LINE))
 		dump[i] = buffer.String()
 		buffer = bytes.NewBuffer(nil)
-		ad += 16
+		ad += LINE
 	}
 	return dump
 }

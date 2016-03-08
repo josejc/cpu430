@@ -11,6 +11,7 @@ func TestMemory(t *testing.T) {
 	var address uint20
 
 	address = uint20(rand.Uint32())
+	address = address >> 16
 	m := NewBasicMemory()
 	expected = 65535
 	m.Write(address, expected)
