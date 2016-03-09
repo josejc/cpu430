@@ -2,6 +2,7 @@ package cpu430
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 )
 
@@ -42,15 +43,20 @@ func (mem *BasicMemory) Reset() {
 }
 
 // TODO: Check even address and limit of memory size
-func (mem *BasicMemory) Read(address uint20) (value uint16) {
-	value = mem.m[address]
-	return
+func (mem *BasicMemory) Read(address uint20) (uint16, error) {
+	if (address % 2) != 0 {
+		return 0, errors.New("Miss aligned memory")
+	}
+	return mem.m[address], nil
 }
 
 // TODO: Check even address and limit of memory size
-func (mem *BasicMemory) Write(address uint20, value uint16) {
+func (mem *BasicMemory) Write(address uint20, value uint16) error {
+	if (address % 2) != 0 {
+		return errors.New("Miss aligned memory")
+	}
 	mem.m[address] = value
-	return
+	return nil
 }
 
 // TODO: Check even address, limit memory
@@ -101,12 +107,9 @@ func (mem *BasicMemory) Dump(address uint20, size uint16) []string {
 	adEnd := uint16(address) + size
 	adEnd |= 0x000f
 	n_line := ((adEnd + 1) - ad) / LINE
-	fmt.Println("address:", address, "ad:", ad, "adEnd:", adEnd, "nline:", n_line)
 	dump := make([]string, n_line)
 	for i := 0; ad < adEnd; i++ {
 		buffer.WriteString(fmt.Sprintf("%04x: ", ad))
-		fmt.Println("uint20-ad", uint20(ad))
-		fmt.Println(mem.RawDumpHex(uint20(ad), LINE))
 		buffer.WriteString(mem.RawDumpHex(uint20(ad), LINE))
 		buffer.WriteString(" ")
 		buffer.WriteString(mem.RawDumpAscii(uint20(ad), LINE))
