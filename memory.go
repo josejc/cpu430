@@ -1,49 +1,49 @@
 package cpu430
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
+	"strings"
 )
 
 // TODO: Control of size and memory limit
-
-const (
-	MEMORY_SIZE uint32 = 1048576 // 2^20 (20bit address)
-)
+// Now is limit uint16 = 2^16 -> 64KB
 
 // uint20 represents a 20 bit physical address
-type uint20 uint32
+//type uint20 uint32
 
 // Represents the RAM memory
-type Memory interface {
-	Reset()                             // Sets all memory locations to zero
-	Read(address uint20) (value uint16) // Return the value at memory address
-	Write(address uint20, value uint16) // Write the value at memory address
-	// TODO: Read and Write Bytes ;)
-}
+//type Memory interface {
+//	Reset()                             // Sets all memory locations to zero
+//	Read(address uint16) (value uint16) // Return the value at memory address
+//	Write(address uint16, value uint16) // Write the value at memory address
+// TODO: Read and Write Bytes ;)
+//}
 
 // Represents the memory using a map of uint16's.
-type BasicMemory struct {
-	m map[uint20]uint16
+type Memory struct {
+	m map[uint16]uint16
 }
 
-// Returns a pointer to a new BasicMemory with all memory initialized
+// Returns a pointer to a new Memory with all memory initialized
 // to zero.
-func NewBasicMemory() *BasicMemory {
-	return &BasicMemory{
-		m: make(map[uint20]uint16),
+func NewMemory() *Memory {
+	return &Memory{
+		m: make(map[uint16]uint16),
 	}
 }
 
 // Resets all memory locations to zero
-func (mem *BasicMemory) Reset() {
-	n := make(map[uint20]uint16)
+func (mem *Memory) Reset() {
+	n := make(map[uint16]uint16)
 	mem.m = n
 }
 
 // TODO: Check even address and limit of memory size
-func (mem *BasicMemory) Read(address uint20) (uint16, error) {
+func (mem *Memory) Read(address uint16) (uint16, error) {
 	if (address % 2) != 0 {
 		return 0, errors.New("Miss aligned memory")
 	}
@@ -51,7 +51,7 @@ func (mem *BasicMemory) Read(address uint20) (uint16, error) {
 }
 
 // TODO: Check even address and limit of memory size
-func (mem *BasicMemory) Write(address uint20, value uint16) error {
+func (mem *Memory) Write(address uint16, value uint16) error {
 	if (address % 2) != 0 {
 		return errors.New("Miss aligned memory")
 	}
@@ -60,11 +60,11 @@ func (mem *BasicMemory) Write(address uint20, value uint16) error {
 }
 
 // TODO: Check even address, limit memory
-func (mem *BasicMemory) RawDumpHex(address uint20, size uint16) string {
+func (mem *Memory) RawDumpHex(address uint16, size uint16) string {
 	var buffer bytes.Buffer
 	var data uint16
 
-	long := address + uint20(size)
+	long := address + size
 	for i := address; i < long; i = i + 2 {
 		data = mem.m[i]
 		buffer.WriteString(fmt.Sprintf("%04x ", data))
@@ -72,20 +72,20 @@ func (mem *BasicMemory) RawDumpHex(address uint20, size uint16) string {
 	return buffer.String()
 }
 
-func ascii(dx uint8) uint8 {
-	if (dx >= 32) && (dx < 127) {
-		return dx
+func ascii(code uint8) uint8 {
+	if (code >= 32) && (code < 127) {
+		return code
 	}
 	return '.'
 }
 
 // ;)
-func (mem *BasicMemory) RawDumpAscii(address uint20, size uint16) string {
+func (mem *Memory) RawDumpAscii(address uint16, size uint16) string {
 	var buffer bytes.Buffer
 	var data uint16
 	var dh, dl uint8
 
-	long := address + uint20(size)
+	long := address + size
 	for i := address; i < long; i = i + 2 {
 		data = mem.m[i]
 		dh = ascii(uint8((data & 0xff00) >> 8))
@@ -96,28 +96,87 @@ func (mem *BasicMemory) RawDumpAscii(address uint20, size uint16) string {
 	return buffer.String()
 }
 
-func (mem *BasicMemory) Dump(address uint20, size uint16) []string {
+func (mem *Memory) Dump(address uint16, size uint16) []string {
 	const (
 		LINE = 0x10 // Size of dump bytes in a line
 	)
 	buffer := bytes.NewBuffer(nil)
 
-	ad := uint16(address)
-	ad &= 0xfff0
-	adEnd := uint16(address) + size
+	address &= 0xfff0
+	adEnd := address + size
 	adEnd |= 0x000f
-	n_line := ((adEnd + 1) - ad) / LINE
+	n_line := ((adEnd + 1) - address) / LINE
 	dump := make([]string, n_line)
-	for i := 0; ad < adEnd; i++ {
-		buffer.WriteString(fmt.Sprintf("%04x: ", ad))
-		buffer.WriteString(mem.RawDumpHex(uint20(ad), LINE))
+	for i := 0; address < adEnd; i++ {
+		buffer.WriteString(fmt.Sprintf("%04x: ", address))
+		buffer.WriteString(mem.RawDumpHex(address, LINE))
 		buffer.WriteString(" ")
-		buffer.WriteString(mem.RawDumpAscii(uint20(ad), LINE))
+		buffer.WriteString(mem.RawDumpAscii(address, LINE))
 		dump[i] = buffer.String()
 		buffer = bytes.NewBuffer(nil)
-		ad += LINE
+		address += LINE
 	}
 	return dump
 }
 
 // TODO: function to load memory of file ;)
+func loadIHEX(filePtr *string, address uint16) error {
+	var r *strings.Reader
+	var b byte
+	var x, y, oldy int
+
+	f, err := os.Open(*filePtr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
+		return errors.New("Can't open file")
+	} else {
+		input := bufio.NewScanner(f)
+	header:
+		// Read patterns and positions
+		for input.Scan() {
+			r = strings.NewReader(input.Text())
+			b, _ = r.ReadByte()
+			if b == '#' {
+				b, _ = r.ReadByte()
+				if b == 'P' {
+					s := strings.Split(input.Text(), " ")
+					x, _ = strconv.Atoi(s[1])
+					y, _ = strconv.Atoi(s[2])
+					x += (M / 2)
+					y += (N / 2)
+					oldy = y
+				} else {
+					fmt.Fprintf(os.Stderr, "ERROR: Expected Position or blocks not config parameters\n")
+					return false
+				}
+			} else {
+				p.x = x
+				for cells := int(r.Size()); cells > 0; cells-- {
+					p.y = y
+					switch b {
+					case '.':
+						{
+							//m[p] = 0
+						}
+					case '*':
+						{
+							m[p] = 1
+						}
+					default:
+						{
+							fmt.Fprintf(os.Stderr, "ERROR: Character not valid, only '.' or '*'\n")
+							return false
+						}
+					}
+					b, _ = r.ReadByte()
+					y++
+				}
+			}
+			x++
+			y = oldy
+		}
+	}
+	f.Close()
+	return nil
+	// NOTE: ignoring potential errors from input.Err()
+}

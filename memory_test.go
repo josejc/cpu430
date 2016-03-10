@@ -8,10 +8,9 @@ import (
 
 func TestMemory(t *testing.T) {
 	var v, expected uint16
-	var address uint20
+	var address uint16
 
-	address = uint20(rand.Uint32())
-	address = address >> 16
+	address = uint16(rand.Uint32())
 	address &= 0xfffe // Addres now is even
 	m := NewBasicMemory()
 	expected = 65535
