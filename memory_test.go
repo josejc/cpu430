@@ -12,7 +12,7 @@ func TestMemory(t *testing.T) {
 
 	address = uint16(rand.Uint32())
 	address &= 0xfffe // Addres now is even
-	m := NewBasicMemory()
+	m := NewMemory()
 	expected = 65535
 	err := m.Write(address, expected)
 	if err != nil {
@@ -34,4 +34,5 @@ func TestMemory(t *testing.T) {
 	if v != 0 {
 		t.Error("Expected 0, got ", v)
 	}
+	m.loadIHEX("samples/out.hex", 0)
 }

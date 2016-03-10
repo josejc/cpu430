@@ -1,12 +1,10 @@
 package cpu430
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
-	"os"
-	"strings"
+	"io/ioutil"
 )
 
 // TODO: Control of size and memory limit
@@ -120,63 +118,11 @@ func (mem *Memory) Dump(address uint16, size uint16) []string {
 }
 
 // TODO: function to load memory of file ;)
-func loadIHEX(filePtr *string, address uint16) error {
-	var r *strings.Reader
-	var b byte
-	var x, y, oldy int
+func (mem *Memory) loadIHEX(filename string, address uint16) error {
 
-	f, err := os.Open(*filePtr)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-		return errors.New("Can't open file")
-	} else {
-		input := bufio.NewScanner(f)
-	header:
-		// Read patterns and positions
-		for input.Scan() {
-			r = strings.NewReader(input.Text())
-			b, _ = r.ReadByte()
-			if b == '#' {
-				b, _ = r.ReadByte()
-				if b == 'P' {
-					s := strings.Split(input.Text(), " ")
-					x, _ = strconv.Atoi(s[1])
-					y, _ = strconv.Atoi(s[2])
-					x += (M / 2)
-					y += (N / 2)
-					oldy = y
-				} else {
-					fmt.Fprintf(os.Stderr, "ERROR: Expected Position or blocks not config parameters\n")
-					return false
-				}
-			} else {
-				p.x = x
-				for cells := int(r.Size()); cells > 0; cells-- {
-					p.y = y
-					switch b {
-					case '.':
-						{
-							//m[p] = 0
-						}
-					case '*':
-						{
-							m[p] = 1
-						}
-					default:
-						{
-							fmt.Fprintf(os.Stderr, "ERROR: Character not valid, only '.' or '*'\n")
-							return false
-						}
-					}
-					b, _ = r.ReadByte()
-					y++
-				}
-			}
-			x++
-			y = oldy
-		}
-	}
-	f.Close()
-	return nil
+	data, err := ioutil.ReadFile(filename)
+	s := string(data)
+	fmt.Println(s)
+	return err
 	// NOTE: ignoring potential errors from input.Err()
 }
