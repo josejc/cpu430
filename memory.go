@@ -2,9 +2,11 @@ package cpu430
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"strings"
 )
 
 // TODO: Control of size and memory limit
@@ -122,7 +124,36 @@ func (mem *Memory) loadIHEX(filename string, address uint16) error {
 
 	data, err := ioutil.ReadFile(filename)
 	s := string(data)
-	fmt.Println(s)
+	lines := strings.Split(s, "\n")
+	for _, line := range lines {
+		// Check the format of Intel Hex
+		// line[0] = Start code, one character, an ASCII colon ':'
+		if line[0] != ':' {
+			return errors.New("Intel HEX incorrect format")
+		}
+		// line[1:3] = Byte count, two hex digits, indicating the number of bytes (hex digit pairs) in the data field
+		bc := line[1:3]
+		fmt.Println(bc)
+		// line[3:7] = Address, four hex digits, representing the 16-bit beginning memory address offset of the data
+		ad := line[3:7]
+		fmt.Println(ad)
+		// line[7:9] = Record type, two hex digits, 00 to 05, defining the meaning of the data field.
+		//   00-Data
+		//   01-Enf of file
+		//   03..05 Don't implemented :p
+		rt := line[7:9]
+		fmt.Println(rt)
+		brt, _ := hex.DecodeString(rt)
+		if brt[0] == byte(1) {
+			return nil
+		}
+		// line[9:9+n] = Data, a sequence of n bytes of data, represented by 2n hex digits
+		// line[9+n,9+n+2] = Checksum, two hex digits, a computed value that can be used to verify the record has no errors
+		//   Checksum calculation: A record's checksum byte is the two's complement (negative) of the data checksum,
+		//     which is the least significant byte (LSB) of the sum of all decoded byte values in the record preceding the checksum.
+		//     It is computed by summing the decoded byte values and extracting the LSB of the sum (i.e., the data checksum),
+		//     and then calculating the two's complement of the LSB (e.g., by inverting its bits and adding one)
+	}
 	return err
 	// NOTE: ignoring potential errors from input.Err()
 }
