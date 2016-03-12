@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"strconv"
 	"strings"
 )
 
@@ -133,22 +134,32 @@ func (mem *Memory) loadIHEX(filename string, address uint16) error {
 		}
 		// line[1:3] = Byte count, two hex digits, indicating the number of bytes (hex digit pairs) in the data field
 		bc := line[1:3]
-		fmt.Println(bc)
+		fmt.Println("Byte count:", bc)
+		nbc, _ := strconv.ParseInt(bc, 16, 16)
+		nbc *= 2
 		// line[3:7] = Address, four hex digits, representing the 16-bit beginning memory address offset of the data
 		ad := line[3:7]
-		fmt.Println(ad)
+		fmt.Println("Address:", ad)
 		// line[7:9] = Record type, two hex digits, 00 to 05, defining the meaning of the data field.
 		//   00-Data
 		//   01-Enf of file
 		//   03..05 Don't implemented :p
 		rt := line[7:9]
-		fmt.Println(rt)
 		brt, _ := hex.DecodeString(rt)
-		if brt[0] == byte(1) {
+		switch brt[0] {
+		case byte(0):
+			fmt.Println("Record Type:", rt)
+		case byte(1):
 			return nil
+		default:
+			return errors.New("Record type, don't implemented")
 		}
 		// line[9:9+n] = Data, a sequence of n bytes of data, represented by 2n hex digits
+		data := line[9 : 9+nbc]
+		fmt.Println("Data:", data)
 		// line[9+n,9+n+2] = Checksum, two hex digits, a computed value that can be used to verify the record has no errors
+		check := line[9+nbc : 9+nbc+2]
+		fmt.Println("Checksum:", check)
 		//   Checksum calculation: A record's checksum byte is the two's complement (negative) of the data checksum,
 		//     which is the least significant byte (LSB) of the sum of all decoded byte values in the record preceding the checksum.
 		//     It is computed by summing the decoded byte values and extracting the LSB of the sum (i.e., the data checksum),
