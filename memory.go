@@ -2,7 +2,7 @@ package cpu430
 
 import (
 	"bytes"
-	"encoding/hex"
+	//	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -136,20 +136,25 @@ func (mem *Memory) loadIHEX(filename string, address uint16) error {
 		bc := line[1:3]
 		fmt.Println("Byte count:", bc)
 		nbc, _ := strconv.ParseInt(bc, 16, 16)
-		nbc *= 2
+		ck := nbc
+		nbc = nbc << 1
 		// line[3:7] = Address, four hex digits, representing the 16-bit beginning memory address offset of the data
 		ad := line[3:7]
+		ck1, _ := strconv.ParseInt(line[3:5], 16, 16)
+		ck2, _ := strconv.ParseInt(line[5:7], 16, 16)
+		ck += ck1 + ck2
 		fmt.Println("Address:", ad)
 		// line[7:9] = Record type, two hex digits, 00 to 05, defining the meaning of the data field.
 		//   00-Data
 		//   01-Enf of file
 		//   03..05 Don't implemented :p
-		rt := line[7:9]
-		brt, _ := hex.DecodeString(rt)
-		switch brt[0] {
-		case byte(0):
+		rt, _ := strconv.ParseInt(line[7:9], 16, 16)
+		ck += rt
+		//brt, _ := hex.DecodeString(rt)
+		switch rt {
+		case 0:
 			fmt.Println("Record Type:", rt)
-		case byte(1):
+		case 1:
 			return nil
 		default:
 			return errors.New("Record type, don't implemented")
