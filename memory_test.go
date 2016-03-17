@@ -35,4 +35,6 @@ func TestMemory(t *testing.T) {
 		t.Error("Expected 0, got ", v)
 	}
 	m.loadIHEX("samples/out.hex", 0)
+	address = 0
+	fmt.Println(m.Dump(address, 64))
 }

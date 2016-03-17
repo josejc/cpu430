@@ -165,8 +165,15 @@ func (mem *Memory) loadIHEX(filename string, address uint16) error {
 		// line[9:9+n] = Data, a sequence of n bytes of data, represented by 2n hex digits
 		data := line[9 : 9+nbc]
 		fmt.Println("Data:", data)
-		for i := 9; i < int(9+nbc); i += 2 {
-			d, _ := strconv.ParseUint(line[i:i+2], 16, 16)
+		for i := 9; i < int(9+nbc); i += 4 {
+			// TODO Check limits, suppose address and nbytes are even
+			dl, _ := strconv.ParseUint(line[i:i+2], 16, 16)
+			dh, _ := strconv.ParseUint(line[i+2:i+4], 16, 16)
+			dx := uint16(dh)
+			dx = dx << 8
+			dx = dx | uint16(dl)
+			mem.Write(address, dx)
+			address += 2
 			// dl i:i+2    -- i=even address
 			// dh i+2:i+4
 			// dx=dhdl
@@ -177,9 +184,9 @@ func (mem *Memory) loadIHEX(filename string, address uint16) error {
 			// dh2 i+4:i+6
 			// dx2=dh2dl2
 			// dx1=dh1XX -> need read memory and conserve dl or write.Bytes with odd address
-			ck += uint8(d)
+			ck += uint8(dh) + uint8(dl)
 		}
-		// Two's complement: Bitwise xor FFh and plus 1
+		// Two's complement: (Bitwise xor FFh) and plus 1
 		c2 := ck ^ 0xff
 		c2++
 		// line[9+n,9+n+2] = Checksum, two hex digits, a computed value that can be used to verify the record has no errors
