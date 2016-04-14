@@ -40,6 +40,8 @@ func redraw_all() {
 		tbprint(0, 2, coldef, coldef, "EventNone")
 	}
 	tbprint(0, 3, coldef, coldef, fmt.Sprintf("%d", curev.N))
+	sx, sy := termbox.Size()
+	tbprint(0, 4, coldef, coldef, fmt.Sprintf("%d %d", sx, sy))
 	termbox.Flush()
 }
 

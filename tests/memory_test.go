@@ -26,6 +26,7 @@ func TestMemory(t *testing.T) {
 	m.Write(address+4, 0x4344)
 	m.Write(address+6, 0x4546)
 	m.Write(address+9, 0x6565)
+
 	fmt.Println(m.RawDumpHex(address, 16))
 	fmt.Println(m.RawDumpAscii(address, 16))
 	fmt.Println(m.Dump(address, 32))
