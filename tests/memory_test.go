@@ -2,6 +2,7 @@ package cpu430
 
 import (
 	"fmt"
+	"github.com/josejc/cpu430"
 	"math/rand"
 	"testing"
 )
@@ -12,7 +13,7 @@ func TestMemory(t *testing.T) {
 
 	address = uint16(rand.Uint32())
 	address &= 0xfffe // Addres now is even
-	m := NewMemory()
+	m := cpu430.NewMemory()
 	expected = 65535
 	err := m.Write(address, expected)
 	if err != nil {
@@ -35,7 +36,7 @@ func TestMemory(t *testing.T) {
 	if v != 0 {
 		t.Error("Expected 0, got ", v)
 	}
-	m.loadIHEX("samples/out.hex", 0)
+	m.LoadIHEX("../samples/out.hex", 0)
 	address = 0
 	fmt.Println(m.Dump(address, 64))
 }

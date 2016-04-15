@@ -121,7 +121,7 @@ func (mem *Memory) Dump(address uint16, size uint16) []string {
 }
 
 // TODO: function to load memory of file ;)
-func (mem *Memory) loadIHEX(filename string, address uint16) error {
+func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 
 	data, err := ioutil.ReadFile(filename)
 	s := string(data)
