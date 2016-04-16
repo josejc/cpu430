@@ -47,12 +47,18 @@ func (reg *Registers) Reset() {
 	// TODO: PC, SP, SR different values?
 }
 
-// Prints the values of each register
+// Print the values of each register
 func (reg *Registers) Print() {
-	fmt.Printf("R[0]:%#x, R[1]:%#x, R[2]:%#x, R[3]:%#x\n", reg.R[0], reg.R[1], reg.R[2], reg.R[3])
-	fmt.Printf("R[4]:%#x, R[5]:%#x, R[6]:%#x, R[7]:%#x\n", reg.R[4], reg.R[5], reg.R[6], reg.R[7])
-	fmt.Printf("R[8]:%#x, R[9]:%#x, R[10]:%#x, R[11]:%#x\n", reg.R[8], reg.R[9], reg.R[10], reg.R[11])
-	fmt.Printf("R[12]:%#x, R[13]:%#x, R[14]:%#x, R[15]:%#x\n", reg.R[12], reg.R[13], reg.R[14], reg.R[15])
+	fmt.Printf(reg.String())
+}
+
+// String return a string with the values of registers
+func (reg *Registers) String() string {
+	l1 := fmt.Sprintf("R[0]:%#x, R[1]:%#x, R[2]:%#x, R[3]:%#x\n", reg.R[0], reg.R[1], reg.R[2], reg.R[3])
+	l2 := fmt.Sprintf("R[4]:%#x, R[5]:%#x, R[6]:%#x, R[7]:%#x\n", reg.R[4], reg.R[5], reg.R[6], reg.R[7])
+	l3 := fmt.Sprintf("R[8]:%#x, R[9]:%#x, R[10]:%#x, R[11]:%#x\n", reg.R[8], reg.R[9], reg.R[10], reg.R[11])
+	l4 := fmt.Sprintf("R[12]:%#x, R[13]:%#x, R[14]:%#x, R[15]:%#x\n", reg.R[12], reg.R[13], reg.R[14], reg.R[15])
+	return l1 + l2 + l3 + l4
 }
 
 // Represents the msp430 cpu

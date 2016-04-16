@@ -1,4 +1,4 @@
-package cpu430
+package cpu430_test
 
 import (
 	"fmt"

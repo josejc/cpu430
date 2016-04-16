@@ -2,6 +2,7 @@ package main
 
 import (
 	//"fmt"
+	"github.com/josejc/cpu430"
 	"github.com/nsf/termbox-go"
 	//"strings"
 )
@@ -17,7 +18,14 @@ func draw_all() {
 	const coldef = termbox.ColorDefault
 	termbox.Clear(coldef, coldef)
 	tbprint(0, 0, termbox.ColorMagenta, coldef, "Press 'esc' to quit")
-	//tbprint i_hex file
+	m := cpu430.NewMemory()
+	// print the i_hex file
+	i_hex := m.Dump(0, 64)
+	x := 2
+	for _, line := range i_hex {
+		tbprint(x, 0, termbox.ColorRed, coldef, line)
+		x++
+	}
 	termbox.Flush()
 }
 
