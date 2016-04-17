@@ -134,19 +134,19 @@ func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 		}
 		// line[1:3] = Byte count, two hex digits, indicating the number of bytes (hex digit pairs) in the data field
 		bc := line[1:3]
-		fmt.Println("Byte count:", bc)
+		//DEBUG:fmt.Println("Byte count:", bc)
 		nbc, _ := strconv.ParseUint(bc, 16, 16)
 		ck := uint8(nbc)
 		nbc = nbc << 1
 		// line[3:7] = Address, four hex digits, representing the 16-bit beginning memory address offset of the data
-		ad := line[3:7]
+		//DEBUG: ad := line[3:7]
 		ah, _ := strconv.ParseUint(line[3:5], 16, 16)
 		al, _ := strconv.ParseUint(line[5:7], 16, 16)
 		address := uint16(ah)
 		address = address << 8
 		address = address | uint16(al)
 		ck += uint8(ah) + uint8(al)
-		fmt.Println("Address:", ad, "=", address)
+		//DEBUG: fmt.Println("Address:", ad, "=", address)
 		// line[7:9] = Record type, two hex digits, 00 to 05, defining the meaning of the data field.
 		//   00-Data
 		//   01-Enf of file
@@ -156,15 +156,15 @@ func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 		//brt, _ := hex.DecodeString(rt)
 		switch rt {
 		case 0:
-			fmt.Println("Record Type:", rt)
+			//DEBUG: fmt.Println("Record Type:", rt)
 		case 1:
 			return nil
 		default:
 			return errors.New("Record type, don't implemented")
 		}
 		// line[9:9+n] = Data, a sequence of n bytes of data, represented by 2n hex digits
-		data := line[9 : 9+nbc]
-		fmt.Println("Data:", data)
+		//DEBUG: data := line[9 : 9+nbc]
+		//DEBUG: fmt.Println("Data:", data)
 		for i := 9; i < int(9+nbc); i += 4 {
 			// TODO Check limits, suppose address and nbytes are even
 			dl, _ := strconv.ParseUint(line[i:i+2], 16, 16)
@@ -192,10 +192,10 @@ func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 		// line[9+n,9+n+2] = Checksum, two hex digits, a computed value that can be used to verify the record has no errors
 		check := line[9+nbc : 9+nbc+2]
 		ckk, _ := strconv.ParseUint(check, 16, 16)
-		if c2 == uint8(ckk) {
-			fmt.Println("Equals=", check)
-		} else {
-			fmt.Println("Different Checksum:", check, "!=", c2)
+		//DEBUG: fmt.Println("Checksum=", check)
+		if c2 != uint8(ckk) {
+			//DEBUG: fmt.Println("Different Checksum:", check, "!=", c2)
+			return errors.New("Different checksum")
 		}
 		//   Checksum calculation: A record's checksum byte is the two's complement (negative) of the data checksum,
 		//     which is the least significant byte (LSB) of the sum of all decoded byte values in the record preceding the checksum.
