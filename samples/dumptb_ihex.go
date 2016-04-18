@@ -22,10 +22,10 @@ func draw_all() {
 	m.LoadIHEX("out.hex", 0)
 	// print the i_hex file
 	i_hex := m.Dump(0, 64)
-	x := 2
+	y := 2
 	for _, line := range i_hex {
-		tbprint(x, 0, termbox.ColorRed, coldef, line)
-		x++
+		tbprint(0, y, termbox.ColorRed, coldef, line)
+		y++
 	}
 	termbox.Flush()
 }
@@ -47,7 +47,7 @@ loop:
 				break loop
 			default:
 				{
-					tbprint(1, 1, termbox.ColorBlack, termbox.ColorDefault, "The key is not 'esc'")
+					tbprint(0, 1, termbox.ColorBlack, termbox.ColorDefault, "The key is not 'esc'")
 					termbox.Flush()
 				}
 			}
