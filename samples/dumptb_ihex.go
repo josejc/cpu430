@@ -27,6 +27,13 @@ func draw_all() {
 		tbprint(0, y, termbox.ColorRed, coldef, line)
 		y++
 	}
+	y++
+	r := cpu430.NewRegisters()
+	reg := r.Dump()
+	for _, line := range reg {
+		tbprint(0, y, termbox.ColorRed, coldef, line)
+		y++
+	}
 	termbox.Flush()
 }
 

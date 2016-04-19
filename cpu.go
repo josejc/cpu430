@@ -61,6 +61,15 @@ func (reg *Registers) String() string {
 	return l1 + l2 + l3 + l4
 }
 
+func (reg *Registers) Dump() []string {
+	dump := make([]string, 4)
+	dump[0] = fmt.Sprintf("R[00]:%#x, R[01]:%#x, R[02]:%#x, R[03]:%#x\n", reg.R[0], reg.R[1], reg.R[2], reg.R[3])
+	dump[1] = fmt.Sprintf("R[04]:%#x, R[05]:%#x, R[06]:%#x, R[07]:%#x\n", reg.R[4], reg.R[5], reg.R[6], reg.R[7])
+	dump[2] = fmt.Sprintf("R[08]:%#x, R[09]:%#x, R[10]:%#x, R[11]:%#x\n", reg.R[8], reg.R[9], reg.R[10], reg.R[11])
+	dump[3] = fmt.Sprintf("R[12]:%#x, R[13]:%#x, R[14]:%#x, R[15]:%#x\n", reg.R[12], reg.R[13], reg.R[14], reg.R[15])
+	return dump
+}
+
 // Represents the msp430 cpu
 type CPU struct {
 	reg      Registers
