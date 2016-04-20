@@ -1,5 +1,7 @@
 package cpu430
 
+//"errors"
+
 /*
 15 	14 	13 	12 	11 	10 	9 	8 	7 	6 	5 	4 	3 	2 	1 	0 	Instrucción
 
@@ -62,3 +64,41 @@ Addressing modes using R2 (SR) and R3 (CG), special-case decoding
 10 	— 	3 (CG) 	#2 	Constant. The operand is the constant 2.
 11 	— 	3 (CG) 	#−1 	Constant. The operand is the constant −1.
 */
+
+// Represents a instruction
+//type Opcode interface {
+//  Opcode(code uint16) (i instruction) // Return the instruction and their values
+//  Execute(i, instruction) (error, cycles)
+// TODO:
+//}
+
+// Instruction data
+/*
+type Instruction struct {
+	op     int    // 1 Operand, 0 Jmp, 2 Operand
+	opcode uint16 //  Operation
+	bw     bool   // True -> Byte, False -> Word
+	offset uint16 // 10-bit signed offset (jmp Instruction)
+	as     uint16 // Address source
+	ad     uint16 // Address destination
+	reg    uint16 // register
+
+}
+*/
+
+// Opcode return the type of instruction
+func Opcode(code uint16) string {
+	var i uint16
+
+	i = 0xE0
+	i &= code
+	i = i >> 13
+	switch i {
+	case 0:
+		return "Single-operand arithmetic"
+	case 1:
+		return "Conditional jump; PC = PC + 2×offset"
+	default:
+		return "Two-operand arithmetic"
+	}
+}
