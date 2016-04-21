@@ -10,13 +10,13 @@ func main() {
 	var i uint16
 
 	m := cpu430.NewMemory()
-	e := m.LoadIHEX("out.hex", 0)
+	e := m.LoadIHEX("kk2.hex", 0)
 	if e != nil {
 		fmt.Println(e)
 		return
 	}
 	// print the i_hex file
-	i_hex := m.Dump(0, 64)
+	i_hex := m.Dump(256, 64)
 	for _, line := range i_hex {
 		fmt.Println(line)
 	}

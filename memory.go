@@ -24,13 +24,12 @@ import (
 // TODO: Read and Write Bytes ;)
 //}
 
-// Represents the memory using a map of uint16's.
+// Memory represents using a map of uint16's.
 type Memory struct {
 	m map[uint16]uint16
 }
 
-// Returns a pointer to a new Memory with all memory initialized
-// to zero.
+// NewMemory Returns a pointer to a new Memory with all memory initialized to zero.
 func NewMemory() *Memory {
 	return &Memory{
 		m: make(map[uint16]uint16),
@@ -97,6 +96,7 @@ func (mem *Memory) RawDumpAscii(address uint16, size uint16) string {
 	return buffer.String()
 }
 
+// Dump return the values in memory
 func (mem *Memory) Dump(address uint16, size uint16) []string {
 	const (
 		LINE = 0x10 // Size of dump bytes in a line
@@ -134,37 +134,43 @@ func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 		}
 		// line[1:3] = Byte count, two hex digits, indicating the number of bytes (hex digit pairs) in the data field
 		bc := line[1:3]
-		//DEBUG:fmt.Println("Byte count:", bc)
+		//--DEBUGfmt.Println("Byte count:", bc) //--DEBUG
 		nbc, _ := strconv.ParseUint(bc, 16, 16)
 		ck := uint8(nbc)
+		//--DEBUGfmt.Println("Summatory of values=", ck) //--DEBUG
+
 		nbc = nbc << 1
 		// line[3:7] = Address, four hex digits, representing the 16-bit beginning memory address offset of the data
-		//DEBUG: ad := line[3:7]
+		ad := line[3:7] //--DEBUG
 		ah, _ := strconv.ParseUint(line[3:5], 16, 16)
 		al, _ := strconv.ParseUint(line[5:7], 16, 16)
 		address := uint16(ah)
 		address = address << 8
 		address = address | uint16(al)
 		ck += uint8(ah) + uint8(al)
-		//DEBUG: fmt.Println("Address:", ad, "=", address)
+		//--DEBUGfmt.Println("Summatory of values=", ck) //--DEBUG
+
+		fmt.Println("Address:", ad, "=", address) //--DEBUG
 		// line[7:9] = Record type, two hex digits, 00 to 05, defining the meaning of the data field.
 		//   00-Data
 		//   01-Enf of file
 		//   03..05 Don't implemented :p
 		rt, _ := strconv.ParseUint(line[7:9], 16, 16)
 		ck += uint8(rt)
+		//--DEBUGfmt.Println("Summatory of values=", ck) //--DEBUG
+
 		//brt, _ := hex.DecodeString(rt)
 		switch rt {
 		case 0:
-			//DEBUG: fmt.Println("Record Type:", rt)
+			//--DEBUGfmt.Println("Record Type:", rt) //--DEBUG
 		case 1:
 			return nil
 		default:
 			return errors.New("Record type, don't implemented")
 		}
 		// line[9:9+n] = Data, a sequence of n bytes of data, represented by 2n hex digits
-		//DEBUG: data := line[9 : 9+nbc]
-		//DEBUG: fmt.Println("Data:", data)
+		data := line[9 : 9+nbc]    //--DEBUG
+		fmt.Println("Data:", data) //--DEBUG
 		for i := 9; i < int(9+nbc); i += 4 {
 			// TODO Check limits, suppose address and nbytes are even
 			dl, _ := strconv.ParseUint(line[i:i+2], 16, 16)
@@ -185,16 +191,19 @@ func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 			// dx2=dh2dl2
 			// dx1=dh1XX -> need read memory and conserve dl or write.Bytes with odd address
 			ck += uint8(dh) + uint8(dl)
+			//--DEBUGfmt.Println("Summatory of values=", ck) //--DEBUG
+
 		}
+		//--DEBUGfmt.Println("Summatory of values=", ck) //--DEBUG
 		// Two's complement: (Bitwise xor FFh) and plus 1
 		c2 := ck ^ 0xff
 		c2++
 		// line[9+n,9+n+2] = Checksum, two hex digits, a computed value that can be used to verify the record has no errors
 		check := line[9+nbc : 9+nbc+2]
 		ckk, _ := strconv.ParseUint(check, 16, 16)
-		//DEBUG: fmt.Println("Checksum=", check)
+		//--DEBUGfmt.Println("Checksum=", check) //--DEBUG
 		if c2 != uint8(ckk) {
-			//DEBUG: fmt.Println("Different Checksum:", check, "!=", c2)
+			//--DEBUGfmt.Println("Different Checksum:", check, "!=", c2) //--DEBUG
 			return errors.New("Different checksum")
 		}
 		//   Checksum calculation: A record's checksum byte is the two's complement (negative) of the data checksum,
