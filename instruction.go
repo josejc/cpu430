@@ -90,7 +90,7 @@ type Instruction struct {
 func Opcode(code uint16) string {
 	var i uint16
 
-	i = 0xE0
+	i = 0xE000
 	i &= code
 	i = i >> 13
 	switch i {

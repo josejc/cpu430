@@ -24,18 +24,19 @@ const (
 	CG
 )
 
+// Registers 16 of 16bit
 type Registers struct {
 	R [16]uint16
 }
 
-// Creates a new set of Registers
+// NewRegisters Creates a new set
 func NewRegisters() (reg *Registers) {
 	reg = new(Registers)
 	reg.Reset()
 	return
 }
 
-// Resets all registers
+// Reset all registers
 func (reg *Registers) Reset() {
 	for i := 4; i < 16; i++ {
 		reg.R[i] = 0
@@ -61,6 +62,7 @@ func (reg *Registers) String() string {
 	return l1 + l2 + l3 + l4
 }
 
+// Dump return a strings with the values
 func (reg *Registers) Dump() []string {
 	dump := make([]string, 4)
 	dump[0] = fmt.Sprintf("R[00]:%#x, R[01]:%#x, R[02]:%#x, R[03]:%#x\n", reg.R[0], reg.R[1], reg.R[2], reg.R[3])
@@ -70,7 +72,7 @@ func (reg *Registers) Dump() []string {
 	return dump
 }
 
-// Represents the msp430 cpu
+// CPU Represents the msp430 cpu
 type CPU struct {
 	reg      Registers
 	src, dst uint16
@@ -89,7 +91,7 @@ type soc struct {
 
 func (cpu *CPU) Execute() {
 	// fetch
-	opcode := OpCode(soc.memory.read(soc.cpu.reg.R[PC]))
+	opcode := soc.mem.Read(soc.cpu.reg.R[PC])
 	inst, ok := cpu.instructions[opcode]
 
 	if !ok {

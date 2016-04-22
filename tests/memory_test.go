@@ -15,24 +15,24 @@ func TestMemory(t *testing.T) {
 	address &= 0xfffe // Addres now is even
 	m := cpu430.NewMemory()
 	expected = 65535
-	err := m.Write(address, expected)
+	err := m.WriteW(address, expected)
 	if err != nil {
 		fmt.Println(err)
 	}
-	v, _ = m.Read(address)
+	v, _ = m.ReadW(address)
 	if v != expected {
 		t.Error("Expected 65535, got ", v)
 	}
-	m.Write(address+2, 0x4142)
-	m.Write(address+4, 0x4344)
-	m.Write(address+6, 0x4546)
-	m.Write(address+9, 0x6565)
+	m.WriteW(address+2, 0x4142)
+	m.WriteW(address+4, 0x4344)
+	m.WriteW(address+6, 0x4546)
+	m.WriteW(address+9, 0x6565)
 
-	fmt.Println(m.RawDumpHex(address, 16))
-	fmt.Println(m.RawDumpAscii(address, 16))
-	fmt.Println(m.Dump(address, 32))
+	fmt.Println("Hex:", m.RawDumpHex(address, 16))
+	fmt.Println("ASCII:", m.RawDumpASCII(address, 16))
+	fmt.Println("Full:", m.Dump(address, 32))
 	m.Reset()
-	v, _ = m.Read(address)
+	v, _ = m.ReadW(address)
 	if v != 0 {
 		t.Error("Expected 0, got ", v)
 	}

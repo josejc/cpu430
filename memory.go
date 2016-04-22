@@ -24,50 +24,78 @@ import (
 // TODO: Read and Write Bytes ;)
 //}
 
-// Memory represents using a map of uint16's.
+// Memory represents using a map of uint8's (Bytes).
 type Memory struct {
-	m map[uint16]uint16
+	m map[uint16]uint8
 }
 
 // NewMemory Returns a pointer to a new Memory with all memory initialized to zero.
 func NewMemory() *Memory {
 	return &Memory{
-		m: make(map[uint16]uint16),
+		m: make(map[uint16]uint8),
 	}
 }
 
-// Resets all memory locations to zero
+// Reset all memory locations to zero
 func (mem *Memory) Reset() {
-	n := make(map[uint16]uint16)
+	n := make(map[uint16]uint8)
 	mem.m = n
 }
 
+// ReadB read a Byte
 // TODO: Check even address and limit of memory size
-func (mem *Memory) Read(address uint16) (uint16, error) {
-	if (address % 2) != 0 {
-		return 0, errors.New("Miss aligned memory")
-	}
+func (mem *Memory) ReadB(address uint16) (uint8, error) {
 	return mem.m[address], nil
 }
 
+// ReadW read a Word (2xByte)
 // TODO: Check even address and limit of memory size
-func (mem *Memory) Write(address uint16, value uint16) error {
+func (mem *Memory) ReadW(address uint16) (uint16, error) {
 	if (address % 2) != 0 {
-		return errors.New("Miss aligned memory")
+		return 0, errors.New("Miss aligned memory")
 	}
+	dl := mem.m[address]
+	dh := mem.m[address+1]
+	dx := uint16(dh)
+	dx = dx << 8
+	dx = dx | uint16(dl)
+	return dx, nil
+}
+
+// WriteB write a Byte
+// TODO: Check even address and limit of memory size
+func (mem *Memory) WriteB(address uint16, value uint8) error {
 	mem.m[address] = value
 	return nil
 }
 
+// WriteW write a Word (2xByte)
+// TODO: Check even address and limit of memory size
+func (mem *Memory) WriteW(address uint16, value uint16) error {
+	if (address % 2) != 0 {
+		return errors.New("Miss aligned memory")
+	}
+	dh := uint8((value & 0xff00) >> 8)
+	dl := uint8(value & 0x00ff)
+	mem.m[address] = dl
+	mem.m[address+1] = dh
+	return nil
+}
+
+// RawDumpHex dump in a string the memory
 // TODO: Check even address, limit memory
 func (mem *Memory) RawDumpHex(address uint16, size uint16) string {
 	var buffer bytes.Buffer
-	var data uint16
+	var data uint8
 
 	long := address + size
-	for i := address; i < long; i = i + 2 {
+	// Only dump address even
+	// Check even address?
+	for i := address; i < long; i += 2 {
 		data = mem.m[i]
-		buffer.WriteString(fmt.Sprintf("%04x ", data))
+		buffer.WriteString(fmt.Sprintf("%02x", data))
+		data = mem.m[i+1]
+		buffer.WriteString(fmt.Sprintf("%02x ", data))
 	}
 	return buffer.String()
 }
@@ -79,19 +107,15 @@ func ascii(code uint8) uint8 {
 	return '.'
 }
 
-// ;)
-func (mem *Memory) RawDumpAscii(address uint16, size uint16) string {
+// RawDumpASCII dump in a string in ascci code
+func (mem *Memory) RawDumpASCII(address uint16, size uint16) string {
 	var buffer bytes.Buffer
-	var data uint16
-	var dh, dl uint8
+	var data uint8
 
 	long := address + size
-	for i := address; i < long; i = i + 2 {
-		data = mem.m[i]
-		dh = ascii(uint8((data & 0xff00) >> 8))
-		dl = ascii(uint8(data & 0x00ff))
-		buffer.WriteString(string(dh))
-		buffer.WriteString(string(dl))
+	for i := address; i < long; i++ {
+		data = ascii(mem.m[i])
+		buffer.WriteString(string(data))
 	}
 	return buffer.String()
 }
@@ -106,13 +130,13 @@ func (mem *Memory) Dump(address uint16, size uint16) []string {
 	address &= 0xfff0
 	adEnd := address + size
 	adEnd |= 0x000f
-	n_line := ((adEnd + 1) - address) / LINE
-	dump := make([]string, n_line)
+	nLine := ((adEnd + 1) - address) / LINE
+	dump := make([]string, nLine)
 	for i := 0; address < adEnd; i++ {
 		buffer.WriteString(fmt.Sprintf("%04x: ", address))
 		buffer.WriteString(mem.RawDumpHex(address, LINE))
 		buffer.WriteString(" ")
-		buffer.WriteString(mem.RawDumpAscii(address, LINE))
+		buffer.WriteString(mem.RawDumpASCII(address, LINE))
 		dump[i] = buffer.String()
 		buffer = bytes.NewBuffer(nil)
 		address += LINE
@@ -120,6 +144,7 @@ func (mem *Memory) Dump(address uint16, size uint16) []string {
 	return dump
 }
 
+// LoadIHEX load a file .hex in memory
 // TODO: function to load memory of file ;)
 func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 
@@ -171,28 +196,13 @@ func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 		// line[9:9+n] = Data, a sequence of n bytes of data, represented by 2n hex digits
 		data := line[9 : 9+nbc]    //--DEBUG
 		fmt.Println("Data:", data) //--DEBUG
-		for i := 9; i < int(9+nbc); i += 4 {
+		for i := 9; i < int(9+nbc); i += 2 {
 			// TODO Check limits, suppose address and nbytes are even
-			dl, _ := strconv.ParseUint(line[i:i+2], 16, 16)
-			dh, _ := strconv.ParseUint(line[i+2:i+4], 16, 16)
-			dx := uint16(dh)
-			dx = dx << 8
-			dx = dx | uint16(dl)
-			mem.Write(address, dx)
-			address += 2
-			// dl i:i+2    -- i=even address
-			// dh i+2:i+4
-			// dx=dhdl
-			//
-			// -- i=odd address
-			// dh1 i:i+2
-			// dl2 i+2:i+4
-			// dh2 i+4:i+6
-			// dx2=dh2dl2
-			// dx1=dh1XX -> need read memory and conserve dl or write.Bytes with odd address
-			ck += uint8(dh) + uint8(dl)
+			data, _ := strconv.ParseUint(line[i:i+2], 16, 16)
+			mem.WriteB(address, uint8(data))
+			address++
+			ck += uint8(data)
 			//--DEBUGfmt.Println("Summatory of values=", ck) //--DEBUG
-
 		}
 		//--DEBUGfmt.Println("Summatory of values=", ck) //--DEBUG
 		// Two's complement: (Bitwise xor FFh) and plus 1
