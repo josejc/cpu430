@@ -1,5 +1,7 @@
 package cpu430
 
+import "fmt"
+
 //"errors"
 
 /*
@@ -92,13 +94,78 @@ func Opcode(code uint16) string {
 
 	i = 0xE000
 	i &= code
-	i = i >> 13
+	i >>= 13
 	switch i {
 	case 0:
-		return "Single-operand arithmetic"
+		return "Single-operand arithmetic:" + single(code)
 	case 1:
 		return "Conditional jump; PC = PC + 2×offset"
 	default:
 		return "Two-operand arithmetic"
 	}
+}
+
+func single(code uint16) string {
+	var i, oc, bw, as, r uint16
+	var s string
+
+	// Chech all bits of single instruction
+	i = 0x1C00
+	i &= code
+	i >>= 10
+	if i != 4 {
+		return "Error decoding instruction, single"
+	}
+
+	// Check opcode
+	oc = 0x0380
+	oc &= code
+	oc >>= 6
+	switch oc {
+	case 0:
+		s = "RRC Rotate right through carry"
+	case 1:
+		s = "SWPB Swap bytes"
+	case 2:
+		s = "RRA Rotate right arithmetic"
+	case 3:
+		s = "SXT Sign extend byte to word"
+	case 4:
+		s = "PUSH Push value onto stack"
+	case 5:
+		s = "CALL Subroutine call; push PC and move source to PC"
+	case 6:
+		s = "ETI Return from interrupt; pop SR then pop PC"
+	default:
+		return "Error decoding instruction, opcode"
+	}
+
+	// Check B/W
+	bw = 0x0040
+	bw &= code
+	bw >>= 5
+	if bw == 0 {
+		// Ok in all opcodes
+		s += ",W"
+	} else {
+		// Ok in opcodes=0,2 or 4
+		if (oc == 0) || (oc == 2) || (oc == 4) {
+			s += ",B"
+		} else {
+			return "Error decoding, B/W"
+		}
+	}
+
+	// Check as Address Source
+	as = 0x0030
+	as &= code
+	as >>= 4
+	s += fmt.Sprintf(",as: %d", as)
+
+	// Check r Register
+	r = 0x000f
+	r &= code
+	s += fmt.Sprintf(",reg: %d", r)
+
+	return s
 }

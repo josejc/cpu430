@@ -23,11 +23,6 @@ func main() {
 	for _, line := range i_hex {
 		fmt.Println(line)
 	}
-	fmt.Println("Example double operand")
-	fmt.Println("Assembly: mov.w r5,r4")
-	fmt.Println("Instruction code: 0x4504")
-	i = uint16(0x4504)
-	fmt.Printf("Op.code %x -- %v\n", i, cpu430.Opcode(i))
 
 	fmt.Println("Example single operand")
 	fmt.Println("Assembly: rrc.w r5")
@@ -40,4 +35,11 @@ func main() {
 	fmt.Println("Instruction code: 0x2fe4")
 	i = uint16(0x2fe4)
 	fmt.Printf("Op.code %x -- %v\n", i, cpu430.Opcode(i))
+
+	fmt.Println("Example double operand")
+	fmt.Println("Assembly: mov.w r5,r4")
+	fmt.Println("Instruction code: 0x4504")
+	i = uint16(0x4504)
+	fmt.Printf("Op.code %x -- %v\n", i, cpu430.Opcode(i))
+
 }
