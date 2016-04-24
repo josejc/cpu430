@@ -92,16 +92,16 @@ type Instruction struct {
 func Opcode(code uint16) string {
 	var i uint16
 
-	i = 0xE000
+	i = 0xe000
 	i &= code
 	i >>= 13
 	switch i {
 	case 0:
 		return "Single-operand arithmetic:" + single(code)
 	case 1:
-		return "Conditional jump; PC = PC + 2×offset"
+		return "Conditional jump; PC = PC + 2×offset:" + jmp(code)
 	default:
-		return "Two-operand arithmetic"
+		return "Two-operand arithmetic:" + two(code)
 	}
 }
 
@@ -109,8 +109,8 @@ func single(code uint16) string {
 	var i, oc, bw, as, r uint16
 	var s string
 
-	// Chech all bits of single instruction
-	i = 0x1C00
+	// Check all bits of single instruction
+	i = 0x1c00
 	i &= code
 	i >>= 10
 	if i != 4 {
@@ -146,11 +146,11 @@ func single(code uint16) string {
 	bw >>= 5
 	if bw == 0 {
 		// Ok in all opcodes
-		s += ",W"
+		s += ".W"
 	} else {
 		// Ok in opcodes=0,2 or 4
 		if (oc == 0) || (oc == 2) || (oc == 4) {
-			s += ",B"
+			s += ".B"
 		} else {
 			return "Error decoding, B/W"
 		}
@@ -166,6 +166,73 @@ func single(code uint16) string {
 	r = 0x000f
 	r &= code
 	s += fmt.Sprintf(",reg: %d", r)
+
+	return s
+}
+
+func jmp(code uint16) string {
+	var c, os uint16
+	var s string
+
+	// Check Condition
+	c = 0x1c00
+	c &= code
+	c >>= 10
+	s += fmt.Sprintf("condition: %d", c)
+
+	// Check Offset
+	os = 0x03ff
+	os &= code
+	s += fmt.Sprintf(",offset: %x", os)
+
+	return s
+}
+
+func two(code uint16) string {
+	var oc, s1, ad, bw, as, s2 uint16
+	var s string
+
+	// Check all bits of single instruction
+	oc = 0xf000
+	oc &= code
+	oc >>= 12
+	if oc < 4 {
+		return "Error decoding instruction, two"
+	}
+
+	// Check opcode
+	s1 = 0x0f00
+	s1 &= code
+	s1 >>= 8
+	s += fmt.Sprintf(",s1: %x", s1)
+
+	// Check ad Address Destination
+	ad = 0x0080
+	ad &= code
+	ad >>= 7
+	s += fmt.Sprintf(",ad: %d", ad)
+
+	// Check B/W
+	bw = 0x0040
+	bw &= code
+	bw >>= 5
+	if bw == 0 {
+		// Ok in all opcodes
+		s += ".W"
+	} else {
+		s += ".B"
+	}
+
+	// Check as Address Source
+	as = 0x0030
+	as &= code
+	as >>= 4
+	s += fmt.Sprintf(",as: %d", as)
+
+	// Check Source2
+	s2 = 0x000f
+	s2 &= code
+	s += fmt.Sprintf(",s2: %x", s2)
 
 	return s
 }
