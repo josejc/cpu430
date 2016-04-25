@@ -16,7 +16,17 @@ import "fmt"
 0 	0 	0 	1 	0 	0 	1 	0 	0 	B/W  As 	   register 	PUSH Push value onto stack
 0 	0 	0 	1 	0 	0 	1 	0 	1 	0 	 As 	   register 	CALL Subroutine call; push PC and move source to PC
 0 	0 	0 	1 	0 	0 	1 	1 	0 	0 	0 	0 	0 	0 	0 	0 	RETI Return from interrupt; pop SR then pop PC
+*/
 
+const (
+	one    = 0xfc00
+	opcode = 0x0380
+	bw     = 0x0040
+	as     = 0x0030
+	reg    = 0x000f
+)
+
+/*
 0 	0 	1 	condition 	       10-bit signed offset 	        Conditional jump; PC = PC + 2×offset
 
 0 	0 	1 	0 	0 	0 	       10-bit signed offset 	        JNE/JNZ Jump if not equal/zero
@@ -27,7 +37,15 @@ import "fmt"
 0 	0 	1 	1 	0 	1 	       10-bit signed offset 	        JGE Jump if greater or equal
 0 	0 	1 	1 	1 	0 	       10-bit signed offset 	        JL Jump if less
 0 	0 	1 	1 	1 	1 	       10-bit signed offset  	        JMP Jump (unconditionally)
+*/
 
+const (
+	jmpc = 0xe000
+	cond = 0x1c00
+	offs = 0x03ff
+)
+
+/*
      opcode 	source 	Ad 	B/W 	As 	destination 	Two-operand arithmetic
 
 0 	1 	0 	0 	source 	Ad 	B/W 	As 	destination 	MOV Move source to destination
@@ -42,8 +60,19 @@ import "fmt"
 1 	1 	0 	1 	source 	Ad 	B/W 	As 	destination 	BIS Bit set (logical OR)
 1 	1 	1 	0 	source 	Ad 	B/W 	As 	destination 	XOR Exclusive or source with destination
 1 	1 	1 	1 	source 	Ad 	B/W 	As 	destination 	AND Logical AND source with destination (dest &= src)
+*/
 
+const (
+	twoop  = 0xf000
+	source = 0x0f00
+	ad     = 0x0080
+	// Next parameters defined in single operation
+	//bw     = 0x0040
+	//as     = 0x0030
+	dest = 0x000f
+)
 
+/*
 B/W: Most instructions are available in .B (8-bit byte) and .W (16-bit word) suffixed versions, depending on the value of a B/W bit: the bit is set to 1 for 8-bit and 0 for 16-bit.
 
 MSP430 addressing modes: Ad (Address destination), As (Address source)
