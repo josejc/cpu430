@@ -16,17 +16,7 @@ import "fmt"
 0 	0 	0 	1 	0 	0 	1 	0 	0 	B/W  As 	   register 	PUSH Push value onto stack
 0 	0 	0 	1 	0 	0 	1 	0 	1 	0 	 As 	   register 	CALL Subroutine call; push PC and move source to PC
 0 	0 	0 	1 	0 	0 	1 	1 	0 	0 	0 	0 	0 	0 	0 	0 	RETI Return from interrupt; pop SR then pop PC
-*/
 
-const (
-	one    = 0xfc00
-	opcode = 0x0380
-	bw     = 0x0040
-	as     = 0x0030
-	reg    = 0x000f
-)
-
-/*
 0 	0 	1 	condition 	       10-bit signed offset 	        Conditional jump; PC = PC + 2×offset
 
 0 	0 	1 	0 	0 	0 	       10-bit signed offset 	        JNE/JNZ Jump if not equal/zero
@@ -37,15 +27,7 @@ const (
 0 	0 	1 	1 	0 	1 	       10-bit signed offset 	        JGE Jump if greater or equal
 0 	0 	1 	1 	1 	0 	       10-bit signed offset 	        JL Jump if less
 0 	0 	1 	1 	1 	1 	       10-bit signed offset  	        JMP Jump (unconditionally)
-*/
 
-const (
-	jmpc = 0xe000
-	cond = 0x1c00
-	offs = 0x03ff
-)
-
-/*
      opcode 	source 	Ad 	B/W 	As 	destination 	Two-operand arithmetic
 
 0 	1 	0 	0 	source 	Ad 	B/W 	As 	destination 	MOV Move source to destination
@@ -60,19 +42,7 @@ const (
 1 	1 	0 	1 	source 	Ad 	B/W 	As 	destination 	BIS Bit set (logical OR)
 1 	1 	1 	0 	source 	Ad 	B/W 	As 	destination 	XOR Exclusive or source with destination
 1 	1 	1 	1 	source 	Ad 	B/W 	As 	destination 	AND Logical AND source with destination (dest &= src)
-*/
 
-const (
-	twoop  = 0xf000
-	source = 0x0f00
-	ad     = 0x0080
-	// Next parameters defined in single operation
-	//bw     = 0x0040
-	//as     = 0x0030
-	dest = 0x000f
-)
-
-/*
 B/W: Most instructions are available in .B (8-bit byte) and .W (16-bit word) suffixed versions, depending on the value of a B/W bit: the bit is set to 1 for 8-bit and 0 for 16-bit.
 
 MSP430 addressing modes: Ad (Address destination), As (Address source)
@@ -103,28 +73,41 @@ Addressing modes using R2 (SR) and R3 (CG), special-case decoding
 // TODO:
 //}
 
-// Instruction data
-/*
-type Instruction struct {
-	op     int    // 1 Operand, 0 Jmp, 2 Operand
-	opcode uint16 //  Operation
-	bw     bool   // True -> Byte, False -> Word
-	offset uint16 // 10-bit signed offset (jmp Instruction)
-	as     uint16 // Address source
-	ad     uint16 // Address destination
-	reg    uint16 // register
+// Mask for all parameters of instructions
+const (
+	kind  = 0xe000
+	oneOC = 0x0380
+	twoOC = 0xf000
+	AD    = 0x0080
+	BW    = 0x0040
+	AS    = 0x0030
+	SRC   = 0x0f00
+	DST   = 0x000f
+	COND  = 0x1c00
+	OFFS  = 0x03ff
+)
 
+func mask(code, m uint16) uint16 {
+	return ((code & m) >> ffs(m))
 }
-*/
+
+// find first set for obtain the shift
+func ffs(m uint16) uint16 {
+	var i uint16
+
+	for i = 0; i < 16; i++ {
+		if (m & 1) == 1 {
+			return i
+		}
+		m >>= 1
+	}
+	return i
+}
 
 // Opcode return the type of instruction
 func Opcode(code uint16) string {
-	var i uint16
 
-	i = 0xe000
-	i &= code
-	i >>= 13
-	switch i {
+	switch mask(code, kind) {
 	case 0:
 		return "Single-operand arithmetic:" + single(code)
 	case 1:
@@ -135,21 +118,16 @@ func Opcode(code uint16) string {
 }
 
 func single(code uint16) string {
-	var i, oc, bw, as, r uint16
+	var oc, bw, as, r uint16
 	var s string
 
 	// Check all bits of single instruction
-	i = 0x1c00
-	i &= code
-	i >>= 10
-	if i != 4 {
+	if mask(code, COND) != 4 {
 		return "Error decoding instruction, single"
 	}
 
 	// Check opcode
-	oc = 0x0380
-	oc &= code
-	oc >>= 6
+	oc = mask(code, oneOC)
 	switch oc {
 	case 0:
 		s = "RRC Rotate right through carry"
@@ -170,9 +148,7 @@ func single(code uint16) string {
 	}
 
 	// Check B/W
-	bw = 0x0040
-	bw &= code
-	bw >>= 5
+	bw = mask(code, BW)
 	if bw == 0 {
 		// Ok in all opcodes
 		s += ".W"
@@ -186,14 +162,11 @@ func single(code uint16) string {
 	}
 
 	// Check as Address Source
-	as = 0x0030
-	as &= code
-	as >>= 4
+	as = mask(code, AS)
 	s += fmt.Sprintf(",as: %d", as)
 
 	// Check r Register
-	r = 0x000f
-	r &= code
+	r = mask(code, DST)
 	s += fmt.Sprintf(",reg: %d", r)
 
 	return s
@@ -204,14 +177,11 @@ func jmp(code uint16) string {
 	var s string
 
 	// Check Condition
-	c = 0x1c00
-	c &= code
-	c >>= 10
+	c = mask(code, COND)
 	s += fmt.Sprintf("condition: %d", c)
 
 	// Check Offset
-	os = 0x03ff
-	os &= code
+	os = mask(code, OFFS)
 	s += fmt.Sprintf(",offset: %x", os)
 
 	return s
@@ -222,29 +192,21 @@ func two(code uint16) string {
 	var s string
 
 	// Check all bits of single instruction
-	oc = 0xf000
-	oc &= code
-	oc >>= 12
+	oc = mask(code, twoOC)
 	if oc < 4 {
 		return "Error decoding instruction, two"
 	}
 
 	// Check opcode
-	s1 = 0x0f00
-	s1 &= code
-	s1 >>= 8
+	s1 = mask(code, SRC)
 	s += fmt.Sprintf(",s1: %x", s1)
 
 	// Check ad Address Destination
-	ad = 0x0080
-	ad &= code
-	ad >>= 7
+	ad = mask(code, AD)
 	s += fmt.Sprintf(",ad: %d", ad)
 
 	// Check B/W
-	bw = 0x0040
-	bw &= code
-	bw >>= 5
+	bw = mask(code, BW)
 	if bw == 0 {
 		// Ok in all opcodes
 		s += ".W"
@@ -253,14 +215,11 @@ func two(code uint16) string {
 	}
 
 	// Check as Address Source
-	as = 0x0030
-	as &= code
-	as >>= 4
+	as = mask(code, AS)
 	s += fmt.Sprintf(",as: %d", as)
 
 	// Check Source2
-	s2 = 0x000f
-	s2 &= code
+	s2 = mask(code, DST)
 	s += fmt.Sprintf(",s2: %x", s2)
 
 	return s
