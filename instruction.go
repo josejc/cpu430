@@ -87,6 +87,13 @@ const (
 	OFFS  = 0x03ff
 )
 
+// Mnemonics asm, slice of slice strings ;)
+var mnemonic = [][]string{
+	{"rrc", "swpb", "rra", "sxt", "push", "call", "reti"},
+	{"jnz", "jz", "jnc", "jc", "jn", "jge", "jl", "jmp"},
+	{"mov", "add", "addc", "subc", "sub", "cmp", "dadd", "bit", "bic", "bis", "xor", "and"},
+}
+
 func mask(code, m uint16) uint16 {
 	return ((code & m) >> ffs(m))
 }
