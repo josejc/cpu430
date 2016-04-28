@@ -87,7 +87,7 @@ const (
 	OFFS  = 0x03ff
 )
 
-// Mnemonics asm, slice of slice strings ;)
+// Mnemonics asm, slice of slice strings ;)c
 var mnemonic = [][]string{
 	{"rrc", "swpb", "rra", "sxt", "push", "call", "reti"},
 	{"jnz", "jz", "jnc", "jc", "jn", "jge", "jl", "jmp"},
@@ -116,11 +116,11 @@ func Opcode(code uint16) string {
 
 	switch mask(code, kind) {
 	case 0:
-		return "Single-operand arithmetic:" + single(code)
+		return single(code)
 	case 1:
-		return "Conditional jump; PC = PC + 2×offset:" + jmp(code)
+		return jmp(code)
 	default:
-		return "Two-operand arithmetic:" + two(code)
+		return two(code)
 	}
 }
 
@@ -130,41 +130,27 @@ func single(code uint16) string {
 
 	// Check all bits of single instruction
 	if mask(code, COND) != 4 {
-		return "Error decoding instruction, single"
+		return "Single: Error invalid instruction"
 	}
 
 	// Check opcode
 	oc = mask(code, oneOC)
-	switch oc {
-	case 0:
-		s = "RRC Rotate right through carry"
-	case 1:
-		s = "SWPB Swap bytes"
-	case 2:
-		s = "RRA Rotate right arithmetic"
-	case 3:
-		s = "SXT Sign extend byte to word"
-	case 4:
-		s = "PUSH Push value onto stack"
-	case 5:
-		s = "CALL Subroutine call; push PC and move source to PC"
-	case 6:
-		s = "ETI Return from interrupt; pop SR then pop PC"
-	default:
-		return "Error decoding instruction, opcode"
+	if oc > 6 {
+		return "Single: Error decoding instruction"
 	}
+	s = mnemonic[0][oc]
 
 	// Check B/W
 	bw = mask(code, BW)
 	if bw == 0 {
 		// Ok in all opcodes
-		s += ".W"
+		s += ".w"
 	} else {
 		// Ok in opcodes=0,2 or 4
 		if (oc == 0) || (oc == 2) || (oc == 4) {
-			s += ".B"
+			s += ".b"
 		} else {
-			return "Error decoding, B/W"
+			return "Single: Error decoding, B/W"
 		}
 	}
 
@@ -185,7 +171,7 @@ func jmp(code uint16) string {
 
 	// Check Condition
 	c = mask(code, COND)
-	s += fmt.Sprintf("condition: %d", c)
+	s = mnemonic[1][c]
 
 	// Check Offset
 	os = mask(code, OFFS)
@@ -201,25 +187,26 @@ func two(code uint16) string {
 	// Check all bits of single instruction
 	oc = mask(code, twoOC)
 	if oc < 4 {
-		return "Error decoding instruction, two"
+		return "Two Op:Error decoding instruction"
+	}
+	oc -= 4
+	s = mnemonic[2][oc]
+
+	// Check B/W OK in all instructions of two op
+	bw = mask(code, BW)
+	if bw == 0 {
+		s += ".w"
+	} else {
+		s += ".b"
 	}
 
-	// Check opcode
+	// Check source
 	s1 = mask(code, SRC)
 	s += fmt.Sprintf(",s1: %x", s1)
 
 	// Check ad Address Destination
 	ad = mask(code, AD)
 	s += fmt.Sprintf(",ad: %d", ad)
-
-	// Check B/W
-	bw = mask(code, BW)
-	if bw == 0 {
-		// Ok in all opcodes
-		s += ".W"
-	} else {
-		s += ".B"
-	}
 
 	// Check as Address Source
 	as = mask(code, AS)
