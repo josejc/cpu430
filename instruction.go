@@ -49,8 +49,8 @@ MSP430 addressing modes: Ad (Address destination), As (Address source)
 As 	Ad 	Register 	Syntax 	Description
 00 	0 	n 	Rn 	Register direct. The operand is the contents of Rn.
 01 	1 	n 	x(Rn) 	Indexed. The operand is in memory at address Rn+x.
-10 	— 	n 	@Rn 	Register indirect. The operand is in memory at the address held in Rn.
-11 	— 	n 	@Rn+ 	Indirect autoincrement. As above, then the register is incremented by 1 or 2.
+10 	— 	n 	@Rn 	Register indirect. The operand is in memory at the address held in Rn. // NOT for destination
+11 	— 	n 	@Rn+ 	Indirect autoincrement. As above, then the register is incremented by 1 or 2. // NOT for destination
 
 Addressing modes using R0 (PC)
 01 	1 	0 (PC) 	ADDR 	Symbolic. Equivalent to x(PC). The operand is in memory at address PC+x.
@@ -66,13 +66,6 @@ Addressing modes using R2 (SR) and R3 (CG), special-case decoding
 11 	— 	3 (CG) 	#−1 	Constant. The operand is the constant −1.
 */
 
-// Represents a instruction
-//type Opcode interface {
-//  Opcode(code uint16) (i instruction) // Return the instruction and their values
-//  Execute(i, instruction) (error, cycles)
-// TODO:
-//}
-
 // Mask for all parameters of instructions
 const (
 	kind  = 0xe000
@@ -87,7 +80,7 @@ const (
 	OFFS  = 0x03ff
 )
 
-// Mnemonics asm, slice of slice strings ;)c
+// Mnemonics asm, slice of slice strings ;)
 var mnemonic = [][]string{
 	{"rrc", "swpb", "rra", "sxt", "push", "call", "reti"},
 	{"jnz", "jz", "jnc", "jc", "jn", "jge", "jl", "jmp"},
@@ -144,11 +137,11 @@ func single(code uint16) string {
 	bw = mask(code, BW)
 	if bw == 0 {
 		// Ok in all opcodes
-		s += ".w"
+		s += ".w "
 	} else {
 		// Ok in opcodes=0,2 or 4
 		if (oc == 0) || (oc == 2) || (oc == 4) {
-			s += ".b"
+			s += ".b "
 		} else {
 			return "Single: Error decoding, B/W"
 		}
@@ -156,11 +149,14 @@ func single(code uint16) string {
 
 	// Check as Address Source
 	as = mask(code, AS)
-	s += fmt.Sprintf(",as: %d", as)
-
+	if as == 0 {
+		s += "r"
+	} else {
+		s += "X"
+	}
 	// Check r Register
 	r = mask(code, DST)
-	s += fmt.Sprintf(",reg: %d", r)
+	s += fmt.Sprintf("%d", r)
 
 	return s
 }
@@ -175,7 +171,9 @@ func jmp(code uint16) string {
 
 	// Check Offset
 	os = mask(code, OFFS)
-	s += fmt.Sprintf(",offset: %x", os)
+	os <<= 1 // 2x
+	// TODO os += PC
+	s += fmt.Sprintf(" @%x", os)
 
 	return s
 }
@@ -195,26 +193,35 @@ func two(code uint16) string {
 	// Check B/W OK in all instructions of two op
 	bw = mask(code, BW)
 	if bw == 0 {
-		s += ".w"
+		s += ".w "
 	} else {
-		s += ".b"
+		s += ".b "
 	}
-
-	// Check source
-	s1 = mask(code, SRC)
-	s += fmt.Sprintf(",s1: %x", s1)
-
-	// Check ad Address Destination
-	ad = mask(code, AD)
-	s += fmt.Sprintf(",ad: %d", ad)
 
 	// Check as Address Source
 	as = mask(code, AS)
-	s += fmt.Sprintf(",as: %d", as)
+	if as == 0 {
+		s += "r"
+	} else {
+		s += "X"
+	}
+	// Check source
+	s1 = mask(code, SRC)
+	s += fmt.Sprintf("%x,", s1)
 
+	// Check ad Address Destination
+	ad = mask(code, AD)
+	if ad == 0 {
+		s += "r"
+	} else {
+		s += "x(r"
+	}
 	// Check Source2
 	s2 = mask(code, DST)
-	s += fmt.Sprintf(",s2: %x", s2)
+	s += fmt.Sprintf("%x", s2)
+	if ad != 0 {
+		s += ")"
+	}
 
 	return s
 }
