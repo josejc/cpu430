@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	var i uint16
+	var a, i uint16
 
 	m := cpu430.NewMemory()
 	e := m.LoadIHEX("test.hex", 0)
@@ -23,18 +23,27 @@ func main() {
 	for _, line := range i_hex {
 		fmt.Println(line)
 	}
+	fmt.Println("---")
 
 	fmt.Println("Example single operand")
 	fmt.Println("Assembly: rrc.w r5")
-	fmt.Println("Instruction code: 0x1005")
-	i = uint16(0x1005)
+	fmt.Println("Address: 0x0100, Instruction code: 0x1005")
+	a = 0x0100
+	m.WriteW(a, 0x1005)
+	i_hex = m.Dump(a, 0x0f)
+	for _, line := range i_hex {
+		fmt.Println(line)
+	}
+	i, _ = m.ReadW(a)
 	fmt.Printf("Op.code %x -- %v\n", i, cpu430.Opcode(i))
+	fmt.Println("---")
 
 	fmt.Println("Example jmp")
 	fmt.Println("Assembly: jc main")
 	fmt.Println("Instruction code: 0x2fe4")
 	i = uint16(0x2fe4)
 	fmt.Printf("Op.code %x -- %v\n", i, cpu430.Opcode(i))
+	fmt.Println("---")
 
 	fmt.Println("Example double operand")
 	fmt.Println("Assembly: mov.w r5,r4")

@@ -104,6 +104,13 @@ func ffs(m uint16) uint16 {
 	return i
 }
 
+// Decode return the instruction of an address
+// TODO think a struct for instruction values and hex
+// TODO Decode in memory.go OR instruction.go
+func Decode(adr uint16) string {
+	return "XXX"
+}
+
 // Opcode return the type of instruction
 func Opcode(code uint16) string {
 
