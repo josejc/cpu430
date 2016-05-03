@@ -224,3 +224,10 @@ func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 	return err
 	// NOTE: ignoring potential errors from input.Err()
 }
+
+// Decode return the instruction of an address
+// TODO think a struct for instruction values and hex
+func (mem *Memory) Decode(adr uint16) string {
+	i, _ := mem.ReadW(adr)
+	return Opcode(i)
+}

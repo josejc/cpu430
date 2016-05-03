@@ -80,6 +80,12 @@ const (
 	OFFS  = 0x03ff
 )
 
+// Instruction all the values for disassm and execute a Instruction
+type Instruction struct {
+	kind, oneoc, twooc, ad, bw, as, src, dst, cond, offs uint16
+	asm                                                  string
+}
+
 // Mnemonics asm, slice of slice strings ;)
 var mnemonic = [][]string{
 	{"rrc", "swpb", "rra", "sxt", "push", "call", "reti"},
@@ -102,13 +108,6 @@ func ffs(m uint16) uint16 {
 		m >>= 1
 	}
 	return i
-}
-
-// Decode return the instruction of an address
-// TODO think a struct for instruction values and hex
-// TODO Decode in memory.go OR instruction.go
-func Decode(adr uint16) string {
-	return "XXX"
 }
 
 // Opcode return the type of instruction

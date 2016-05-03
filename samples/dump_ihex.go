@@ -34,8 +34,8 @@ func main() {
 	for _, line := range i_hex {
 		fmt.Println(line)
 	}
-	i, _ = m.ReadW(a)
-	fmt.Printf("Op.code %x -- %v\n", i, cpu430.Opcode(i))
+	fmt.Printf("%#x: %v\n", a, m.Decode(a))
+	//fmt.Printf("Op.code %x -- %v\n", i, cpu430.Opcode(i))
 	fmt.Println("---")
 
 	fmt.Println("Example jmp")
