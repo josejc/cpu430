@@ -83,7 +83,12 @@ const (
 // Instruction all the values for disassm and execute a Instruction
 type Instruction struct {
 	kind, oneoc, twooc, ad, bw, as, src, dst, cond, offs uint16
-	asm                                                  string
+	asX, adX                                             uint16    // as=01 -> X is stored in the next world and now in this variable
+	l                                                    uint16    // long of instruction, MAX=3
+	hex                                                  [3]uint16 // values of instruction -> hex[0] = instruction
+	// hex[1] = asX
+	// hex[2] = adX
+	asm string
 }
 
 // Mnemonics asm, slice of slice strings ;)
