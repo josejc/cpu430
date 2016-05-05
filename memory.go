@@ -19,9 +19,9 @@ import (
 // Represents the RAM memory
 //type Memory interface {
 //	Reset()                             // Sets all memory locations to zero
-//	Read(address uint16) (value uint16) // Return the value at memory address
-//	Write(address uint16, value uint16) // Write the value at memory address
-// TODO: Read and Write Bytes ;)
+//	ReadW(address uint16) (value uint16) // Return the value at memory address
+//	WriteW(address uint16, value uint16) // Write the value at memory address
+//  ReadB and WriteB address=uint16, value=uint8=Bytes ;)
 //}
 
 // Memory represents using a map of uint8's (Bytes).
@@ -227,7 +227,9 @@ func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 
 // Decode return the instruction of an address
 // TODO think a struct for instruction values and hex
-func (mem *Memory) Decode(adr uint16) string {
-	i, _ := mem.ReadW(adr)
-	return Opcode(i)
+func (mem *Memory) Decode(adr uint16) *Instruction {
+	i := NewInstruction()
+	k, _ := mem.ReadW(adr)
+	i.Opcode(k)
+	return i
 }

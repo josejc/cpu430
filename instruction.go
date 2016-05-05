@@ -83,12 +83,18 @@ const (
 // Instruction all the values for disassm and execute a Instruction
 type Instruction struct {
 	kind, oneoc, twooc, ad, bw, as, src, dst, cond, offs uint16
-	asX, adX                                             uint16    // as=01 -> X is stored in the next world and now in this variable
-	l                                                    uint16    // long of instruction, MAX=3
-	hex                                                  [3]uint16 // values of instruction -> hex[0] = instruction
+	asX, adX                                             uint16 // as=01 -> X is stored in the next world and now in this variable
+	l                                                    uint16 // long of instruction, MAX=3
+	// values of instruction -> hex[0] = instruction
 	// hex[1] = asX
 	// hex[2] = adX
-	asm string
+	hex [3]uint16
+	asm string // mnemonic asm instruction and operands
+}
+
+// NewInstruction Returns a pointer to a new Instruction with all values initialized to zero.
+func NewInstruction() *Instruction {
+	return &Instruction{}
 }
 
 // Mnemonics asm, slice of slice strings ;)
@@ -116,15 +122,17 @@ func ffs(m uint16) uint16 {
 }
 
 // Opcode return the type of instruction
-func Opcode(code uint16) string {
+func (i *Instruction) Opcode(code uint16) {
 
-	switch mask(code, kind) {
+	i.kind = mask(code, kind)
+	i.hex[0] = code
+	switch i.kind {
 	case 0:
-		return single(code)
+		i.asm = single(code)
 	case 1:
-		return jmp(code)
+		i.asm = jmp(code)
 	default:
-		return two(code)
+		i.asm = two(code)
 	}
 }
 
