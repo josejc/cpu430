@@ -74,10 +74,9 @@ func (reg *Registers) Dump() []string {
 
 // CPU Represents the msp430 cpu
 type CPU struct {
-	reg      Registers
-	src, dst uint16
-	inst     uint16
-	//instructions InstructionTable
+	reg  Registers
+	inst Instruction
+	// TODO: interrupts?
 }
 
 /*

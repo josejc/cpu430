@@ -121,6 +121,11 @@ func ffs(m uint16) uint16 {
 	return i
 }
 
+// Dissasm return the string of disassembly instruction
+func (i *Instruction) Dissasm() string {
+	return i.asm
+}
+
 // Opcode return the type of instruction
 func (i *Instruction) Opcode(code uint16) {
 
@@ -128,7 +133,7 @@ func (i *Instruction) Opcode(code uint16) {
 	i.hex[0] = code
 	switch i.kind {
 	case 0:
-		i.asm = single(code)
+		i.single(code)
 	case 1:
 		i.asm = jmp(code)
 	default:
@@ -136,48 +141,48 @@ func (i *Instruction) Opcode(code uint16) {
 	}
 }
 
-func single(code uint16) string {
-	var oc, bw, as, r uint16
-	var s string
-
+func (i *Instruction) single(code uint16) {
 	// Check all bits of single instruction
 	if mask(code, COND) != 4 {
-		return "Single: Error invalid instruction"
+		i.l = 0 // Long = 0 => Invalid instruction
+		i.asm = "Single: Error invalid instruction"
 	}
 
 	// Check opcode
-	oc = mask(code, oneOC)
-	if oc > 6 {
-		return "Single: Error decoding instruction"
+	i.oneoc = mask(code, oneOC)
+	if i.oneoc > 6 {
+		i.l = 0
+		i.asm = "Single: Error decoding instruction"
 	}
-	s = mnemonic[0][oc]
+	i.asm += mnemonic[0][i.oneoc]
 
 	// Check B/W
-	bw = mask(code, BW)
-	if bw == 0 {
+	i.bw = mask(code, BW)
+	if i.bw == 0 {
 		// Ok in all opcodes
-		s += ".w "
+		i.asm += ".w "
 	} else {
 		// Ok in opcodes=0,2 or 4
-		if (oc == 0) || (oc == 2) || (oc == 4) {
-			s += ".b "
+		if (i.oneoc == 0) || (i.oneoc == 2) || (i.oneoc == 4) {
+			i.asm += ".b "
 		} else {
-			return "Single: Error decoding, B/W"
+			i.l = 0
+			i.asm = "Single: Error decoding, B/W"
 		}
 	}
 
 	// Check as Address Source
-	as = mask(code, AS)
-	if as == 0 {
-		s += "r"
+	i.as = mask(code, AS)
+	if i.as == 0 {
+		i.l = 1 // Instruction long only 1 word
+		i.asm += "r"
 	} else {
-		s += "X"
+		i.l = 2 // Instruction long 2 word, second word is X
+		i.asm += "X"
 	}
 	// Check r Register
-	r = mask(code, DST)
-	s += fmt.Sprintf("%d", r)
-
-	return s
+	i.dst = mask(code, DST)
+	i.asm += fmt.Sprintf("%d", i.dst)
 }
 
 func jmp(code uint16) string {
