@@ -135,7 +135,7 @@ func (i *Instruction) Opcode(code uint16) {
 	case 0:
 		i.single(code)
 	case 1:
-		i.asm = jmp(code)
+		i.jmp(code)
 	default:
 		i.asm = two(code)
 	}
@@ -185,21 +185,16 @@ func (i *Instruction) single(code uint16) {
 	i.asm += fmt.Sprintf("%d", i.dst)
 }
 
-func jmp(code uint16) string {
-	var c, os uint16
-	var s string
-
+func (i *Instruction) jmp(code uint16) {
 	// Check Condition
-	c = mask(code, COND)
-	s = mnemonic[1][c]
+	i.cond = mask(code, COND)
+	i.asm = mnemonic[1][i.cond]
 
 	// Check Offset
-	os = mask(code, OFFS)
-	os <<= 1 // 2x
-	// TODO os += PC
-	s += fmt.Sprintf(" @%x", os)
-
-	return s
+	i.offs = mask(code, OFFS)
+	i.offs <<= 1 // 2x
+	// TODO offs += PC
+	i.asm += fmt.Sprintf(" @%x", i.offs)
 }
 
 func two(code uint16) string {

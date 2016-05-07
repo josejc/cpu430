@@ -42,8 +42,15 @@ func main() {
 	fmt.Println("Example jmp")
 	fmt.Println("Assembly: jc main")
 	fmt.Println("Instruction code: 0x2fe4")
-	//i = uint16(0x2fe4)
-	//fmt.Printf("Op.code %x -- %v\n", i, cpu430.Opcode(i))
+	a = 0x0100
+	m.WriteW(a, 0x2fe4)
+	i_hex = m.Dump(a, 0x0f)
+	for _, line := range i_hex {
+		fmt.Println(line)
+	}
+	i = m.Decode(a)
+	fmt.Printf("--%#x: %v\n", a, i.Dissasm())
+	fmt.Printf("--%#x\n", i)
 	fmt.Println("---")
 
 	fmt.Println("Example double operand")
