@@ -127,25 +127,26 @@ func (i *Instruction) Dissasm() string {
 }
 
 // Opcode return the type of instruction
-func (i *Instruction) Opcode(code uint16) {
+func (i *Instruction) Opcode(adr, code uint16) {
 
 	i.kind = mask(code, kind)
 	i.hex[0] = code
 	switch i.kind {
 	case 0:
-		i.single(code)
+		i.single(adr, code)
 	case 1:
 		i.jmp(code)
 	default:
-		i.asm = two(code)
+		i.two(adr, code)
 	}
 }
 
-func (i *Instruction) single(code uint16) {
+func (i *Instruction) single(adr, code uint16) {
 	// Check all bits of single instruction
 	if mask(code, COND) != 4 {
 		i.l = 0 // Long = 0 => Invalid instruction
 		i.asm = "Single: Error invalid instruction"
+		return
 	}
 
 	// Check opcode
@@ -153,7 +154,9 @@ func (i *Instruction) single(code uint16) {
 	if i.oneoc > 6 {
 		i.l = 0
 		i.asm = "Single: Error decoding instruction"
+		return
 	}
+	i.l = 1
 	i.asm += mnemonic[0][i.oneoc]
 
 	// Check B/W
@@ -168,16 +171,16 @@ func (i *Instruction) single(code uint16) {
 		} else {
 			i.l = 0
 			i.asm = "Single: Error decoding, B/W"
+			return
 		}
 	}
 
 	// Check as Address Source
 	i.as = mask(code, AS)
 	if i.as == 0 {
-		i.l = 1 // Instruction long only 1 word
 		i.asm += "r"
 	} else {
-		i.l = 2 // Instruction long 2 word, second word is X
+		i.l++ // Instruction long 2 word, second word is X
 		i.asm += "X"
 	}
 	// Check r Register
@@ -189,6 +192,7 @@ func (i *Instruction) jmp(code uint16) {
 	// Check Condition
 	i.cond = mask(code, COND)
 	i.asm = mnemonic[1][i.cond]
+	i.l = 1 // All jmp instruction are 1 word long
 
 	// Check Offset
 	i.offs = mask(code, OFFS)
@@ -197,50 +201,51 @@ func (i *Instruction) jmp(code uint16) {
 	i.asm += fmt.Sprintf(" @%x", i.offs)
 }
 
-func two(code uint16) string {
-	var oc, s1, ad, bw, as, s2 uint16
-	var s string
-
+func (i *Instruction) two(adr, code uint16) {
 	// Check all bits of single instruction
-	oc = mask(code, twoOC)
-	if oc < 4 {
-		return "Two Op:Error decoding instruction"
+	i.twooc = mask(code, twoOC)
+	if i.twooc < 4 {
+		i.l = 0
+		i.asm = "Two Op:Error decoding instruction"
+		return
 	}
-	oc -= 4
-	s = mnemonic[2][oc]
+	i.l = 1
+	i.twooc -= 4
+	i.asm = mnemonic[2][i.twooc]
 
 	// Check B/W OK in all instructions of two op
-	bw = mask(code, BW)
-	if bw == 0 {
-		s += ".w "
+	i.bw = mask(code, BW)
+	if i.bw == 0 {
+		i.asm += ".w "
 	} else {
-		s += ".b "
+		i.asm += ".b "
 	}
 
 	// Check as Address Source
-	as = mask(code, AS)
-	if as == 0 {
-		s += "r"
+	i.as = mask(code, AS)
+	if i.as == 0 {
+		i.asm += "r"
 	} else {
-		s += "X"
+		i.l++
+		i.asm += "X"
 	}
 	// Check source
-	s1 = mask(code, SRC)
-	s += fmt.Sprintf("%x,", s1)
+	i.src = mask(code, SRC)
+	i.asm += fmt.Sprintf("%x,", i.src)
 
 	// Check ad Address Destination
-	ad = mask(code, AD)
-	if ad == 0 {
-		s += "r"
+	i.ad = mask(code, AD)
+	if i.ad == 0 {
+		i.asm += "r"
 	} else {
-		s += "x(r"
+		i.l++
+		i.asm += "x(r"
 	}
 	// Check Source2
-	s2 = mask(code, DST)
-	s += fmt.Sprintf("%x", s2)
-	if ad != 0 {
-		s += ")"
+	i.dst = mask(code, DST)
+	i.asm += fmt.Sprintf("%x", i.dst)
+	if i.ad != 0 {
+		i.asm += ")"
 	}
 
-	return s
 }

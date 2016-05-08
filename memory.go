@@ -230,6 +230,6 @@ func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 func (mem *Memory) Decode(adr uint16) *Instruction {
 	i := NewInstruction()
 	k, _ := mem.ReadW(adr)
-	i.Opcode(k)
+	i.Opcode(adr, k)
 	return i
 }
