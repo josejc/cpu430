@@ -85,20 +85,24 @@ type CPU struct {
 type soc struct {
 	cpu CPU
 	mem Memory
+	busaddr, busdata, busctrl channels between memory and cpu
 	//	clock Clock
 }
 
 func (cpu *CPU) Execute() {
 	// fetch
-	opcode := soc.mem.Read(soc.cpu.reg.R[PC])
-	inst, ok := cpu.instructions[opcode]
+	busaddr <- soc.cpu.reg.R[PC]
+	busctrl <- ReadW
+	inst <- busdata
 
-	if !ok {
+	inst.Opcode(reg.R[PC])
+	if inst.kind == invalid {
 		fmt.Printf("No such opcode 0x%x\n", opcode)
 		os.Exit(1)
 	}
 
 	// execute, exec() returns number of cycles
+	// update the registers and execute the insttruction
 	cycles := inst.exec(cpu)
 
 	// count cycles

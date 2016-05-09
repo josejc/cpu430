@@ -83,13 +83,9 @@ const (
 // Instruction all the values for disassm and execute a Instruction
 type Instruction struct {
 	kind, oneoc, twooc, ad, bw, as, src, dst, cond, offs uint16
-	asX, adX                                             uint16 // as=01 -> X is stored in the next world and now in this variable
+	asX, adX                                             uint16 // as,ad=01 -> X is stored in the next world and now store in this variable
 	l                                                    uint16 // long of instruction, MAX=3
-	// values of instruction -> hex[0] = instruction
-	// hex[1] = asX
-	// hex[2] = adX
-	hex [3]uint16
-	asm string // mnemonic asm instruction and operands
+	asm                                                  string // mnemonic asm instruction and operands
 }
 
 // NewInstruction Returns a pointer to a new Instruction with all values initialized to zero.
@@ -130,7 +126,6 @@ func (i *Instruction) Dissasm() string {
 func (i *Instruction) Opcode(adr, code uint16) {
 
 	i.kind = mask(code, kind)
-	i.hex[0] = code
 	switch i.kind {
 	case 0:
 		i.single(adr, code)
