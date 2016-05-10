@@ -192,7 +192,7 @@ func (i *Instruction) jmp(code uint16) {
 	// Check Offset
 	i.offs = mask(code, OFFS)
 	i.offs <<= 1 // 2x
-	// TODO offs += PC
+	// TODO (offs+2) += PC
 	i.asm += fmt.Sprintf(" @%x", i.offs)
 }
 

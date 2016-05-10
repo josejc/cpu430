@@ -85,10 +85,31 @@ type CPU struct {
 type soc struct {
 	cpu CPU
 	mem Memory
+	// channels for bus implementation
 	busaddr, busdata, busctrl channels between memory and cpu
 	//	clock Clock
 }
 
+// Without channels
+func (cpu *CPU) Execute() {
+	// fetch
+	inst := cpu.i.Decode(soc.mem,cpu.R[PC])
+	if inst != invalid {
+		fmt.Printf("No such opcode 0x%x\n", opcode)
+		os.Exit(1)
+	}
+	// execute, exec() returns number of cycles
+	cycles := inst.execute(soc.cpu, soc.mem)
+	// count cycles
+	for _ = range cpu.clock.ticker.C {
+		cycles--
+		if cycles == 0 {
+			break
+		}
+	}
+}
+
+// With channels
 func (cpu *CPU) Execute() {
 	// fetch
 	busaddr <- soc.cpu.reg.R[PC]
