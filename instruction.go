@@ -83,14 +83,19 @@ const (
 // Instruction all the values for disassm and execute a Instruction
 type Instruction struct {
 	kind, oneoc, twooc, ad, bw, as, src, dst, cond, offs uint16
-	asX, adX                                             uint16 // as,ad=01 -> X is stored in the next world and now store in this variable
-	l                                                    uint16 // long of instruction, MAX=3
-	asm                                                  string // mnemonic asm instruction and operands
+	asX, adX                                             uint16    // as,ad=01 -> X is stored in the next world and now store in this variable
+	l                                                    uint16    // long of instruction, MAX=3
+	hex                                                  [3]uint16 // Content in address memory (3 words)
+	asm                                                  string    // mnemonic asm instruction and operands
 }
 
 // NewInstruction Returns a pointer to a new Instruction with all values initialized to zero.
-func NewInstruction() *Instruction {
-	return &Instruction{}
+func NewInstruction(m *Memory, adr uint16) *Instruction {
+	i := &Instruction{}
+	i.hex[0], _ = m.ReadW(adr)
+	i.hex[1], _ = m.ReadW(adr + 2)
+	i.hex[2], _ = m.ReadW(adr + 4)
+	return i
 }
 
 // Mnemonics asm, slice of slice strings ;)
@@ -123,20 +128,19 @@ func (i *Instruction) Dissasm() string {
 }
 
 // Opcode return the type of instruction
-func (i *Instruction) Opcode(adr, code uint16) {
-
-	i.kind = mask(code, kind)
+func (i *Instruction) Opcode() {
+	i.kind = mask(i.hex[0], kind)
 	switch i.kind {
 	case 0:
-		i.single(adr, code)
+		i.single(i.hex[0])
 	case 1:
-		i.jmp(code)
+		i.jmp(i.hex[0])
 	default:
-		i.two(adr, code)
+		i.two(i.hex[0])
 	}
 }
 
-func (i *Instruction) single(adr, code uint16) {
+func (i *Instruction) single(code uint16) {
 	// Check all bits of single instruction
 	if mask(code, COND) != 4 {
 		i.l = 0 // Long = 0 => Invalid instruction
@@ -196,7 +200,7 @@ func (i *Instruction) jmp(code uint16) {
 	i.asm += fmt.Sprintf(" @%x", i.offs)
 }
 
-func (i *Instruction) two(adr, code uint16) {
+func (i *Instruction) two(code uint16) {
 	// Check all bits of single instruction
 	i.twooc = mask(code, twoOC)
 	if i.twooc < 4 {
