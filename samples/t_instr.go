@@ -21,7 +21,6 @@ func main() {
 		fmt.Println(line)
 	}
 	i := cpu430.NewInstruction(m, a)
-	i.Opcode()
 	fmt.Printf("--%#x: %v\n", a, i.Dissasm())
 	fmt.Printf("--%#x\n", i)
 	fmt.Println("---")
@@ -36,7 +35,6 @@ func main() {
 		fmt.Println(line)
 	}
 	i = cpu430.NewInstruction(m, a)
-	i.Opcode()
 	fmt.Printf("--%#x: %v\n", a, i.Dissasm())
 	fmt.Printf("--%#x\n", i)
 	fmt.Println("---")
@@ -51,7 +49,6 @@ func main() {
 		fmt.Println(line)
 	}
 	i = cpu430.NewInstruction(m, a)
-	i.Opcode()
 	fmt.Printf("--%#x: %v\n", a, i.Dissasm())
 	fmt.Printf("--%#x\n", i)
 	fmt.Println("---")

@@ -124,6 +124,9 @@ func ffs(m uint16) uint16 {
 
 // Dissasm return the string of disassembly instruction
 func (i *Instruction) Dissasm() string {
+	if i.l == 0 {
+		i.Opcode()
+	}
 	return i.asm
 }
 
@@ -132,15 +135,16 @@ func (i *Instruction) Opcode() {
 	i.kind = mask(i.hex[0], kind)
 	switch i.kind {
 	case 0:
-		i.single(i.hex[0])
+		i.single()
 	case 1:
-		i.jmp(i.hex[0])
+		i.jmp()
 	default:
-		i.two(i.hex[0])
+		i.two()
 	}
 }
 
-func (i *Instruction) single(code uint16) {
+func (i *Instruction) single() {
+	code := i.hex[0]
 	// Check all bits of single instruction
 	if mask(code, COND) != 4 {
 		i.l = 0 // Long = 0 => Invalid instruction
@@ -176,18 +180,31 @@ func (i *Instruction) single(code uint16) {
 
 	// Check as Address Source
 	i.as = mask(code, AS)
-	if i.as == 0 {
+	switch i.as {
+	case 0: // Register direct, Rn
 		i.asm += "r"
-	} else {
+	case 1: // Indexed, X(Rn)
 		i.l++ // Instruction long 2 word, second word is X
-		i.asm += "X"
+		i.asm += fmt.Sprintf("%x(r", i.hex[1])
+	case 2: // Register indirect, @Rn
+		i.asm += "@Rn - Not implemented"
+	default: //Indirect autoincrement, @Rn+
+		i.asm += "@Rn+ - Not implemented"
 	}
+
 	// Check r Register
 	i.dst = mask(code, DST)
 	i.asm += fmt.Sprintf("%d", i.dst)
+	switch i.as {
+	case 1: // Indexed, X(Rn)
+		i.asm += ")"
+	case 3: //Indirect autoincrement, @Rn+
+		i.asm += "+"
+	}
 }
 
-func (i *Instruction) jmp(code uint16) {
+func (i *Instruction) jmp() {
+	code := i.hex[0]
 	// Check Condition
 	i.cond = mask(code, COND)
 	i.asm = mnemonic[1][i.cond]
@@ -200,7 +217,8 @@ func (i *Instruction) jmp(code uint16) {
 	i.asm += fmt.Sprintf(" @%x", i.offs)
 }
 
-func (i *Instruction) two(code uint16) {
+func (i *Instruction) two() {
+	code := i.hex[0]
 	// Check all bits of single instruction
 	i.twooc = mask(code, twoOC)
 	if i.twooc < 4 {
@@ -222,23 +240,33 @@ func (i *Instruction) two(code uint16) {
 
 	// Check as Address Source
 	i.as = mask(code, AS)
-	if i.as == 0 {
+	switch i.as {
+	case 0: // Register direct, Rn
 		i.asm += "r"
-	} else {
-		i.l++
-		i.asm += "X"
+	case 1: // Indexed, X(Rn)
+		i.asm += fmt.Sprintf("%x(r", i.hex[i.l])
+		i.l++ // Instruction long 2 word
+	case 2: // Register indirect, @Rn
+		i.asm += "@Rn - Not implemented"
+	default: //Indirect autoincrement, @Rn+
+		i.asm += "@Rn+ - Not implemented"
 	}
 	// Check source
 	i.src = mask(code, SRC)
 	i.asm += fmt.Sprintf("%x,", i.src)
-
+	switch i.as {
+	case 1: // Indexed, X(Rn)
+		i.asm += ")"
+	case 3: //Indirect autoincrement, @Rn+
+		i.asm += "+"
+	}
 	// Check ad Address Destination
 	i.ad = mask(code, AD)
-	if i.ad == 0 {
+	if i.ad == 0 { // Register direct, Rn
 		i.asm += "r"
-	} else {
-		i.l++
-		i.asm += "x(r"
+	} else { // Indexed, X(Rn)
+		i.asm += fmt.Sprintf("%x(r", i.hex[i.l])
+		i.l++ // Instruction long 2 word or 3
 	}
 	// Check Source2
 	i.dst = mask(code, DST)
@@ -246,5 +274,4 @@ func (i *Instruction) two(code uint16) {
 	if i.ad != 0 {
 		i.asm += ")"
 	}
-
 }
