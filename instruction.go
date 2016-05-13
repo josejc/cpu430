@@ -186,10 +186,8 @@ func (i *Instruction) single() {
 	case 1: // Indexed, X(Rn)
 		i.l++ // Instruction long 2 word, second word is X
 		i.asm += fmt.Sprintf("%x(r", i.hex[1])
-	case 2: // Register indirect, @Rn
-		i.asm += "@Rn - Not implemented"
-	default: //Indirect autoincrement, @Rn+
-		i.asm += "@Rn+ - Not implemented"
+	default: //Register indirect, @Rn or Indirect autoincrement, @Rn+
+		i.asm += "@r"
 	}
 
 	// Check r Register
@@ -246,20 +244,19 @@ func (i *Instruction) two() {
 	case 1: // Indexed, X(Rn)
 		i.asm += fmt.Sprintf("%x(r", i.hex[i.l])
 		i.l++ // Instruction long 2 word
-	case 2: // Register indirect, @Rn
-		i.asm += "@Rn - Not implemented"
-	default: //Indirect autoincrement, @Rn+
-		i.asm += "@Rn+ - Not implemented"
+	default: //Register indirect, @Rn or Indirect autoincrement, @Rn+
+		i.asm += "@r"
 	}
 	// Check source
 	i.src = mask(code, SRC)
-	i.asm += fmt.Sprintf("%x,", i.src)
+	i.asm += fmt.Sprintf("%x", i.src)
 	switch i.as {
 	case 1: // Indexed, X(Rn)
 		i.asm += ")"
 	case 3: //Indirect autoincrement, @Rn+
 		i.asm += "+"
 	}
+	i.asm += ","
 	// Check ad Address Destination
 	i.ad = mask(code, AD)
 	if i.ad == 0 { // Register direct, Rn
