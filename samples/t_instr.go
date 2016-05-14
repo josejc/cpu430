@@ -94,9 +94,8 @@ func main() {
 	i = cpu430.NewInstruction(m, a)
 	fmt.Printf("--%#x: %v\n", a, i.Dissasm())
 	fmt.Printf("--%#x\n", i)
-	fmt.Println("---DON'T WORK")
+	fmt.Println("---")
 
-	/* The same case...
 	fmt.Println("Assembly: MOV.W #0x123a,R15")
 	fmt.Println("Instruction code: 0x4536, 0x123a")
 	// a = 0x0100
@@ -110,7 +109,6 @@ func main() {
 	fmt.Printf("--%#x: %v\n", a, i.Dissasm())
 	fmt.Printf("--%#x\n", i)
 	fmt.Println("---")
-	*/
 
 	fmt.Println("Assembly: MOV.B &P1IN,R15")
 	fmt.Println("Instruction code: 0x425F, 0x0020")

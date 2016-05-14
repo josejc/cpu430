@@ -180,6 +180,29 @@ func (i *Instruction) single() {
 
 	// Check as Address Source
 	i.as = mask(code, AS)
+	// Check r Register
+	i.dst = mask(code, DST)
+
+	switch i.dst {
+	case 0:
+		switch i.as {
+		case 1: // Symbolic. Equivalent to x(PC). The operand is in memory at address PC+x.
+			i.asm += "Symbolic"
+			return
+		case 3: // Immediate. Equivalent to @PC+. The operand is the next word in the instruction stream.
+			i.dst = i.hex[i.l]
+			i.l++
+			i.asm += fmt.Sprintf("#%x", i.dst)
+		}
+	case 2:
+		i.asm += "Special register - 2"
+		return
+	case 3:
+		i.asm += "Special register - 3"
+		return
+	}
+
+	// Disassm with as and dst
 	switch i.as {
 	case 0: // Register direct, Rn
 		i.asm += "r"
@@ -189,9 +212,6 @@ func (i *Instruction) single() {
 	default: //Register indirect, @Rn or Indirect autoincrement, @Rn+
 		i.asm += "@r"
 	}
-
-	// Check r Register
-	i.dst = mask(code, DST)
 	i.asm += fmt.Sprintf("%d", i.dst)
 	switch i.as {
 	case 1: // Indexed, X(Rn)
@@ -238,37 +258,75 @@ func (i *Instruction) two() {
 
 	// Check as Address Source
 	i.as = mask(code, AS)
-	switch i.as {
-	case 0: // Register direct, Rn
-		i.asm += "r"
-	case 1: // Indexed, X(Rn)
-		i.asm += fmt.Sprintf("%x(r", i.hex[i.l])
-		i.l++ // Instruction long 2 word
-	default: //Register indirect, @Rn or Indirect autoincrement, @Rn+
-		i.asm += "@r"
-	}
 	// Check source
 	i.src = mask(code, SRC)
-	i.asm += fmt.Sprintf("%x", i.src)
-	switch i.as {
-	case 1: // Indexed, X(Rn)
-		i.asm += ")"
-	case 3: //Indirect autoincrement, @Rn+
-		i.asm += "+"
-	}
-	i.asm += ","
 	// Check ad Address Destination
 	i.ad = mask(code, AD)
-	if i.ad == 0 { // Register direct, Rn
-		i.asm += "r"
-	} else { // Indexed, X(Rn)
-		i.asm += fmt.Sprintf("%x(r", i.hex[i.l])
-		i.l++ // Instruction long 2 word or 3
-	}
 	// Check Source2
 	i.dst = mask(code, DST)
-	i.asm += fmt.Sprintf("%x", i.dst)
-	if i.ad != 0 {
-		i.asm += ")"
+
+	src := true
+	switch i.src {
+	case 0:
+		switch i.as {
+		case 1: // Symbolic. Equivalent to x(PC). The operand is in memory at address PC+x.
+			i.asm += "Symbolic"
+			return
+		case 3: // Immediate. Equivalent to @PC+. The operand is the next word in the instruction stream.
+			src = false
+			i.src = i.hex[i.l]
+			i.l++
+			i.asm += fmt.Sprintf("#%x", i.src)
+		}
+	case 2:
+		i.asm += "Special register - 2"
+		return
+	case 3:
+		i.asm += "Special register - 3"
+		return
+	}
+
+	dst := true
+	switch i.dst {
+	case 0:
+		if i.ad == 1 { // Symbolic. Equivalent to x(PC). The operand is in memory at address PC+x.
+			i.asm += "Symbolic"
+			return
+		}
+	case 2:
+		i.asm += "Special register - 2"
+		return
+	}
+
+	if src {
+		switch i.as {
+		case 0: // Register direct, Rn
+			i.asm += "r"
+		case 1: // Indexed, X(Rn)
+			i.asm += fmt.Sprintf("%x(r", i.hex[i.l])
+			i.l++ // Instruction long 2 word
+		default: //Register indirect, @Rn or Indirect autoincrement, @Rn+
+			i.asm += "@r"
+		}
+		i.asm += fmt.Sprintf("%x", i.src)
+		switch i.as {
+		case 1: // Indexed, X(Rn)
+			i.asm += ")"
+		case 3: //Indirect autoincrement, @Rn+
+			i.asm += "+"
+		}
+	}
+	i.asm += ","
+	if dst {
+		if i.ad == 0 { // Register direct, Rn
+			i.asm += "r"
+		} else { // Indexed, X(Rn)
+			i.asm += fmt.Sprintf("%x(r", i.hex[i.l])
+			i.l++ // Instruction long 2 word or 3
+		}
+		i.asm += fmt.Sprintf("%x", i.dst)
+		if i.ad != 0 {
+			i.asm += ")"
+		}
 	}
 }
