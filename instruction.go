@@ -183,41 +183,46 @@ func (i *Instruction) single() {
 	// Check r Register
 	i.dst = mask(code, DST)
 
+	dst := true
 	switch i.dst {
 	case 0:
 		switch i.as {
 		case 1: // Symbolic. Equivalent to x(PC). The operand is in memory at address PC+x.
-			i.asm += "Symbolic"
-			return
+			// disassm nothing to do, in execution we need PC+X
 		case 3: // Immediate. Equivalent to @PC+. The operand is the next word in the instruction stream.
 			i.dst = i.hex[i.l]
 			i.l++
 			i.asm += fmt.Sprintf("#%x", i.dst)
 		}
 	case 2:
-		i.asm += "Special register - 2"
-		return
+		if i.as == 1 { // Absolute. The operand is in memory at address x.
+			i.dst = i.hex[i.l]
+			i.l++
+			i.asm += fmt.Sprintf("&%x", i.dst)
+		}
 	case 3:
 		i.asm += "Special register - 3"
 		return
 	}
 
-	// Disassm with as and dst
-	switch i.as {
-	case 0: // Register direct, Rn
-		i.asm += "r"
-	case 1: // Indexed, X(Rn)
-		i.l++ // Instruction long 2 word, second word is X
-		i.asm += fmt.Sprintf("%x(r", i.hex[1])
-	default: //Register indirect, @Rn or Indirect autoincrement, @Rn+
-		i.asm += "@r"
-	}
-	i.asm += fmt.Sprintf("%d", i.dst)
-	switch i.as {
-	case 1: // Indexed, X(Rn)
-		i.asm += ")"
-	case 3: //Indirect autoincrement, @Rn+
-		i.asm += "+"
+	if dst {
+		// Disassm with as and dst
+		switch i.as {
+		case 0: // Register direct, Rn
+			i.asm += "r"
+		case 1: // Indexed, X(Rn)
+			i.l++ // Instruction long 2 word, second word is X
+			i.asm += fmt.Sprintf("%x(r", i.hex[1])
+		default: //Register indirect, @Rn or Indirect autoincrement, @Rn+
+			i.asm += "@r"
+		}
+		i.asm += fmt.Sprintf("%d", i.dst)
+		switch i.as {
+		case 1: // Indexed, X(Rn)
+			i.asm += ")"
+		case 3: //Indirect autoincrement, @Rn+
+			i.asm += "+"
+		}
 	}
 }
 
@@ -266,67 +271,76 @@ func (i *Instruction) two() {
 	i.dst = mask(code, DST)
 
 	src := true
+	srcstring := ""
 	switch i.src {
 	case 0:
 		switch i.as {
 		case 1: // Symbolic. Equivalent to x(PC). The operand is in memory at address PC+x.
-			i.asm += "Symbolic"
-			return
+			// disassm nothing to do, in execution we need PC+X
 		case 3: // Immediate. Equivalent to @PC+. The operand is the next word in the instruction stream.
 			src = false
 			i.src = i.hex[i.l]
 			i.l++
-			i.asm += fmt.Sprintf("#%x", i.src)
+			srcstring = fmt.Sprintf("#%x", i.src)
 		}
 	case 2:
-		i.asm += "Special register - 2"
-		return
+		if i.as == 1 { // Absolute. The operand is in memory at address x.
+			src = false
+			i.src = i.hex[i.l]
+			i.l++
+			srcstring = fmt.Sprintf("&%x", i.src)
+		}
 	case 3:
-		i.asm += "Special register - 3"
+		srcstring = "Special register - 3"
 		return
 	}
 
 	dst := true
+	dststring := ""
 	switch i.dst {
 	case 0:
 		if i.ad == 1 { // Symbolic. Equivalent to x(PC). The operand is in memory at address PC+x.
-			i.asm += "Symbolic"
-			return
+			// disassm nothing to do, in execution we need PC+X
 		}
 	case 2:
-		i.asm += "Special register - 2"
-		return
+		if i.ad == 1 { // Absolute. The operand is in memory at address x.
+			dst = false
+			i.dst = i.hex[i.l]
+			i.l++
+			dststring = fmt.Sprintf("&%x", i.dst)
+		}
 	}
 
 	if src {
 		switch i.as {
 		case 0: // Register direct, Rn
-			i.asm += "r"
+			srcstring += "r"
 		case 1: // Indexed, X(Rn)
-			i.asm += fmt.Sprintf("%x(r", i.hex[i.l])
+			srcstring += fmt.Sprintf("%x(r", i.hex[i.l])
 			i.l++ // Instruction long 2 word
 		default: //Register indirect, @Rn or Indirect autoincrement, @Rn+
-			i.asm += "@r"
+			srcstring += "@r"
 		}
-		i.asm += fmt.Sprintf("%x", i.src)
+		srcstring += fmt.Sprintf("%d", i.src)
 		switch i.as {
 		case 1: // Indexed, X(Rn)
-			i.asm += ")"
+			srcstring += ")"
 		case 3: //Indirect autoincrement, @Rn+
-			i.asm += "+"
+			srcstring += "+"
 		}
 	}
-	i.asm += ","
+	i.asm += srcstring + ","
 	if dst {
 		if i.ad == 0 { // Register direct, Rn
-			i.asm += "r"
+			dststring += "r"
 		} else { // Indexed, X(Rn)
-			i.asm += fmt.Sprintf("%x(r", i.hex[i.l])
+			dststring += fmt.Sprintf("%x(r", i.hex[i.l])
 			i.l++ // Instruction long 2 word or 3
 		}
-		i.asm += fmt.Sprintf("%x", i.dst)
+		dststring += fmt.Sprintf("%d", i.dst)
 		if i.ad != 0 {
-			i.asm += ")"
+			dststring += ")"
 		}
 	}
+	i.asm += dststring
 }
