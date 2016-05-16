@@ -185,24 +185,46 @@ func (i *Instruction) single() {
 
 	dst := true
 	switch i.dst {
-	case 0:
+	case 0: // PC
 		switch i.as {
 		case 1: // Symbolic. Equivalent to x(PC). The operand is in memory at address PC+x.
 			// disassm nothing to do, in execution we need PC+X
 		case 3: // Immediate. Equivalent to @PC+. The operand is the next word in the instruction stream.
+			dst = false
 			i.dst = i.hex[i.l]
 			i.l++
 			i.asm += fmt.Sprintf("#%x", i.dst)
+
 		}
-	case 2:
-		if i.as == 1 { // Absolute. The operand is in memory at address x.
-			i.dst = i.hex[i.l]
-			i.l++
-			i.asm += fmt.Sprintf("&%x", i.dst)
+	case 2: // SR
+		if i.as != 0 {
+			dst = false
+			switch i.as {
+			case 1: // Absolute. The operand is in memory at address x.
+				i.dst = i.hex[i.l]
+				i.l++
+				i.asm += fmt.Sprintf("&%x", i.dst)
+			case 2: // Constant. The operand is the constant 4
+				i.dst = 4
+				i.asm += fmt.Sprintf("#%d", i.dst)
+			case 3: // Constant. The operand is the constant 8
+				i.dst = 8
+				i.asm += fmt.Sprintf("#%d", i.dst)
+			}
 		}
-	case 3:
-		i.asm += "Special register - 3"
-		return
+	case 3: // CG
+		dst = false
+		switch i.as {
+		case 0: // Constant. The operand is the constant 0
+			i.dst = 0
+		case 1: // Constant. The operand is the constant 1. There is no index word
+			i.dst = 1
+		case 2: // Constant. The operand is the constant 2
+			i.dst = 2
+		case 3: // Constant. The operand is the constant −1
+			i.dst = 0xffff
+		}
+		i.asm += fmt.Sprintf("#%d", i.dst)
 	}
 
 	if dst {
@@ -283,16 +305,35 @@ func (i *Instruction) two() {
 			i.l++
 			srcstring = fmt.Sprintf("#%x", i.src)
 		}
-	case 2:
-		if i.as == 1 { // Absolute. The operand is in memory at address x.
+	case 2: // SR
+		if i.as != 0 {
 			src = false
-			i.src = i.hex[i.l]
-			i.l++
-			srcstring = fmt.Sprintf("&%x", i.src)
+			switch i.as {
+			case 1: // Absolute. The operand is in memory at address x.
+				i.src = i.hex[i.l]
+				i.l++
+				srcstring = fmt.Sprintf("&%x", i.src)
+			case 2: // Constant. The operand is the constant 4
+				i.src = 4
+				srcstring = fmt.Sprintf("#%d", i.dst)
+			case 3: // Constant. The operand is the constant 8
+				i.src = 8
+				srcstring = fmt.Sprintf("#%d", i.dst)
+			}
 		}
-	case 3:
-		srcstring = "Special register - 3"
-		return
+	case 3: // CG
+		src = false
+		switch i.as {
+		case 0: // Constant. The operand is the constant 0
+			i.src = 0
+		case 1: // Constant. The operand is the constant 1. There is no index word
+			i.src = 1
+		case 2: // Constant. The operand is the constant 2
+			i.src = 2
+		case 3: // Constant. The operand is the constant −1
+			i.src = 0xffff
+		}
+		srcstring = fmt.Sprintf("#%d", i.src)
 	}
 
 	dst := true
