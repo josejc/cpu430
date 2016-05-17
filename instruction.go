@@ -130,6 +130,11 @@ func (i *Instruction) Dissasm() string {
 	return i.asm
 }
 
+// Long return the number of words of instruction
+func (i *Instruction) Long() uint16 {
+	return i.l
+}
+
 // Opcode return the type of instruction
 func (i *Instruction) Opcode() {
 	i.kind = mask(i.hex[0], kind)

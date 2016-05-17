@@ -166,7 +166,7 @@ func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 
 		nbc = nbc << 1
 		// line[3:7] = Address, four hex digits, representing the 16-bit beginning memory address offset of the data
-		ad := line[3:7] //--DEBUG
+		//--DEBUGad := line[3:7] //--DEBUG
 		ah, _ := strconv.ParseUint(line[3:5], 16, 16)
 		al, _ := strconv.ParseUint(line[5:7], 16, 16)
 		address := uint16(ah)
@@ -175,7 +175,7 @@ func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 		ck += uint8(ah) + uint8(al)
 		//--DEBUGfmt.Println("Summatory of values=", ck) //--DEBUG
 
-		fmt.Println("Address:", ad, "=", address) //--DEBUG
+		//--DEBUGfmt.Println("Address:", ad, "=", address) //--DEBUG
 		// line[7:9] = Record type, two hex digits, 00 to 05, defining the meaning of the data field.
 		//   00-Data
 		//   01-Enf of file
@@ -194,8 +194,8 @@ func (mem *Memory) LoadIHEX(filename string, address uint16) error {
 			return errors.New("Record type, don't implemented")
 		}
 		// line[9:9+n] = Data, a sequence of n bytes of data, represented by 2n hex digits
-		data := line[9 : 9+nbc]    //--DEBUG
-		fmt.Println("Data:", data) //--DEBUG
+		//DEBUGdata := line[9 : 9+nbc]    //--DEBUG
+		//DEBIGfmt.Println("Data:", data) //--DEBUG
 		for i := 9; i < int(9+nbc); i += 2 {
 			// TODO Check limits, suppose address and nbytes are even
 			data, _ := strconv.ParseUint(line[i:i+2], 16, 16)
