@@ -135,6 +135,17 @@ func (i *Instruction) Long() uint16 {
 	return i.l
 }
 
+// Hex return a string with it hex values
+func (i *Instruction) Hex() string {
+	var h string
+	var n uint16
+
+	for n = 0; n < i.l; n++ {
+		h += fmt.Sprintf("%x ", i.hex[n])
+	}
+	return h
+}
+
 // Opcode return the type of instruction
 func (i *Instruction) Opcode() {
 	i.kind = mask(i.hex[0], kind)
