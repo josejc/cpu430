@@ -141,7 +141,7 @@ func (i *Instruction) Hex() string {
 	var n uint16
 
 	for n = 0; n < i.l; n++ {
-		h += fmt.Sprintf("%x ", i.hex[n])
+		h += fmt.Sprintf("%04x ", i.hex[n])
 	}
 	return h
 }
