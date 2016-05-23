@@ -1,3 +1,6 @@
+; 
+; Now I need modify for compile with naken ;)
+;
 ;-------------------------------------------------------------------------------
 ; MSP430 Assembler Code Template for use with TI Code Composer Studio
 ;
